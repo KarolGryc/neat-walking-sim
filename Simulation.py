@@ -99,17 +99,21 @@ class Simulation:
 
 
     def update(self):
+        keys = pygame.key.get_pressed()
+        efforts = [0, 0, 0, 0]
+        if keys[pygame.K_w]:
+            efforts = [1, -1, 1, -1]
+        elif keys[pygame.K_s]:
+            efforts = [-1, 1, -1, 1]
+        
+        self.walker.update(efforts)
+
         self.world.Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS)
         self.clock.tick(TARGET_FPS)
 
     def draw(self):
         self.screen.fill((255, 255, 255))
 
-        # for box in self.boxes:
-        #     self.draw_polygon(box)
-        # self.walker.draw()
-
-        # loop over all bodies in the world
         for body in self.world.bodies:
             for fixture in body.fixtures:
                 if not fixture.shape:

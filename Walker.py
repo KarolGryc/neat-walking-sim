@@ -1,9 +1,11 @@
-from Box2D import b2World, b2PolygonShape, b2CircleShape, b2_dynamicBody, b2_staticBody
+from Box2D import b2PolygonShape, b2CircleShape, b2RevoluteJoint
 import pygame
-import Simulation
 import math
 
 class Walker:
+    MAX_JOINT_SPEED = 2 * math.pi * 2
+    MAX_JOINT_TORQUE = 2
+
     def __init__(self, position, simulation):
         self.simulation = simulation
 
@@ -38,32 +40,44 @@ class Walker:
         torso = self._create_limb(HEAD_POS, position, radius=0.3, width=0.4)
 
         # Create the joints
-        self.simulation.world.CreateRevoluteJoint(
+        self.left_hip_joint = self.simulation.world.CreateRevoluteJoint(
             bodyA=left_upper,
             bodyB=torso,
             anchor=LEFT_HIP_POS,
-            collideConnected=False
+            collideConnected=False,
+            enableMotor=True,
+            motorSpeed=self.MAX_JOINT_SPEED,
+            maxMotorTorque=0,
         )
 
-        self.simulation.world.CreateRevoluteJoint(
+        self.right_hip_joint = self.simulation.world.CreateRevoluteJoint(
             bodyA=right_upper,
             bodyB=torso,
             anchor=RIGHT_HIP_POS,
-            collideConnected=False
+            collideConnected=False,
+            enableMotor=True,
+            motorSpeed=self.MAX_JOINT_SPEED,
+            maxMotorTorque=0,
         )
 
-        self.simulation.world.CreateRevoluteJoint(
+        self.left_knee_joint = self.simulation.world.CreateRevoluteJoint(
             bodyA=left_upper,
             bodyB=left_lower,
             anchor=LEFT_KNEE_POS,
-            collideConnected=False
+            collideConnected=False,
+            enableMotor=True,
+            motorSpeed=self.MAX_JOINT_SPEED,
+            maxMotorTorque=0,
         )
 
-        self.simulation.world.CreateRevoluteJoint(
+        self.right_knee_joint = self.simulation.world.CreateRevoluteJoint(
             bodyA=right_upper,
             bodyB=right_lower,
             anchor=RIGHT_KNEE_POS,
-            collideConnected=False
+            collideConnected=False,
+            enableMotor=True,
+            motorSpeed=self.MAX_JOINT_SPEED,
+            maxMotorTorque=0,
         )
 
 
@@ -96,7 +110,16 @@ class Walker:
 
         return body
     
-
-    def draw(self):
-        pass
-
+    def update(self, joint_efforts):
+        if len(joint_efforts) != 4:
+            raise ValueError("Expected 4 joint efforts for the walker.")
+    
+        for (effort, joint) in zip(joint_efforts, [
+            self.left_hip_joint,
+            self.right_hip_joint,
+            self.left_knee_joint,
+            self.right_knee_joint
+        ]):
+            clamped_effort = min(1, max(-1, effort))
+            joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
+            joint.maxMotorTorque = abs(clamped_effort) * self.MAX_JOINT_TORQUE
