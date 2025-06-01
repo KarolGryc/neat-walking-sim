@@ -3,8 +3,8 @@ import pygame
 import math
 
 class Walker:
-    MAX_JOINT_SPEED = 2 * math.pi * 2
-    MAX_JOINT_TORQUE = 2
+    MAX_JOINT_SPEED = 2 * math.pi * 0.7
+    MAX_JOINT_TORQUE = 1000
 
     def __init__(self, position, simulation):
         self.simulation = simulation
@@ -46,8 +46,8 @@ class Walker:
             anchor=LEFT_HIP_POS,
             collideConnected=False,
             enableMotor=True,
-            motorSpeed=self.MAX_JOINT_SPEED,
-            maxMotorTorque=0,
+            motorSpeed=0,
+            maxMotorTorque=self.MAX_JOINT_TORQUE,
         )
 
         self.right_hip_joint = self.simulation.world.CreateRevoluteJoint(
@@ -56,8 +56,8 @@ class Walker:
             anchor=RIGHT_HIP_POS,
             collideConnected=False,
             enableMotor=True,
-            motorSpeed=self.MAX_JOINT_SPEED,
-            maxMotorTorque=0,
+            motorSpeed=0,
+            maxMotorTorque=self.MAX_JOINT_TORQUE,
         )
 
         self.left_knee_joint = self.simulation.world.CreateRevoluteJoint(
@@ -66,8 +66,8 @@ class Walker:
             anchor=LEFT_KNEE_POS,
             collideConnected=False,
             enableMotor=True,
-            motorSpeed=self.MAX_JOINT_SPEED,
-            maxMotorTorque=0,
+            motorSpeed=0,
+            maxMotorTorque=self.MAX_JOINT_TORQUE,
         )
 
         self.right_knee_joint = self.simulation.world.CreateRevoluteJoint(
@@ -76,8 +76,8 @@ class Walker:
             anchor=RIGHT_KNEE_POS,
             collideConnected=False,
             enableMotor=True,
-            motorSpeed=self.MAX_JOINT_SPEED,
-            maxMotorTorque=0,
+            motorSpeed=0,
+            maxMotorTorque=self.MAX_JOINT_TORQUE,
         )
 
 
@@ -121,5 +121,6 @@ class Walker:
             self.right_knee_joint
         ]):
             clamped_effort = min(1, max(-1, effort))
-            joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
-            joint.maxMotorTorque = abs(clamped_effort) * self.MAX_JOINT_TORQUE
+            joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
+            # joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
+            # joint.maxMotorTorque = abs(clamped_effort) * self.MAX_JOINT_TORQUE

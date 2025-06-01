@@ -4,6 +4,7 @@ from Box2D import (
 )
 import math
 import Walker
+import numpy as np
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
@@ -21,7 +22,7 @@ class Simulation:
 
         self.world = b2World(gravity=(0, -10), doSleep=True)
 
-        self.walker = Walker.Walker((2, 9), self)
+        self.walker = Walker.Walker((2,3), self)
 
         self.running = True
 
@@ -100,11 +101,21 @@ class Simulation:
 
     def update(self):
         keys = pygame.key.get_pressed()
-        efforts = [0, 0, 0, 0]
+        efforts = np.array([0, 0, 0, 0])
         if keys[pygame.K_w]:
-            efforts = [1, -1, 1, -1]
-        elif keys[pygame.K_s]:
-            efforts = [-1, 1, -1, 1]
+            efforts += [1, -1, 1, -1]
+        if keys[pygame.K_s]:
+            efforts += [-1, 1, -1, 1]
+        if keys[pygame.K_q]:
+            efforts += [1, 0, 1, 0]
+        if keys[pygame.K_a]:
+            efforts += [-1, 0, -1, 0]
+        if keys[pygame.K_e]:
+            efforts += [0, -1, 0, -1]
+        if keys[pygame.K_d]:
+            efforts += [0, 1, 0, 1]
+        
+
         
         self.walker.update(efforts)
 
