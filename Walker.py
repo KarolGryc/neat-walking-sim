@@ -2,9 +2,12 @@ from Box2D import b2PolygonShape, b2CircleShape, b2RevoluteJoint
 import pygame
 import math
 
+PIN_HEAD = False
+BRAKE_ON_NO_INPUT = True
+
 class Walker:
     MAX_JOINT_SPEED = 2 * math.pi * 0.7
-    MAX_JOINT_TORQUE = 1000
+    MAX_JOINT_TORQUE = 8
 
     def __init__(self, position, simulation):
         self.simulation = simulation
@@ -19,14 +22,21 @@ class Walker:
 
         HEAD_POS = (x, y + 1)
 
-        LEFT_HIP_POS = (x - 0.1, y+0.1)
-        RIGHT_HIP_POS = (x + 0.1, y+0.1)
+        HIP_RADIUS = 0.15
 
-        LEFT_KNEE_POS = (x - 0.3, y - 0.5)
-        RIGHT_KNEE_POS = (x + 0.3, y - 0.5)
+        LEFT_HIP_POS = (x-HIP_RADIUS, y+0.1)
+        RIGHT_HIP_POS = (x+HIP_RADIUS, y+0.1)
 
-        LEFT_FOOT_POS = (x - 0.3, y - 1)
-        RIGHT_FOOT_POS = (x + 0.3, y - 1)
+        LEFT_KNEE_POS = (x-HIP_RADIUS, y - 0.5)
+        RIGHT_KNEE_POS = (x+HIP_RADIUS, y - 0.5)
+
+        LEFT_FOOT_POS = (x-HIP_RADIUS, y - 1)
+        RIGHT_FOOT_POS = (x+HIP_RADIUS, y - 1)
+
+        HIP_FORWARD_LIMIT = math.radians(80)
+        HIP_BACKWARD_LIMIT = math.radians(30)
+        KNEE_FORWARD_LIMIT = math.radians(0)
+        KNEE_BACKWARD_LIMIT = math.radians(100)
 
         # Create the upper legs
         left_upper = self._create_limb(LEFT_KNEE_POS, LEFT_HIP_POS, radius=0.1, width=0.15)
@@ -44,41 +54,53 @@ class Walker:
             bodyA=left_upper,
             bodyB=torso,
             anchor=LEFT_HIP_POS,
-            collideConnected=False,
-            enableMotor=True,
-            motorSpeed=0,
-            maxMotorTorque=self.MAX_JOINT_TORQUE,
+            enableLimit=True,
+            lowerAngle=-HIP_FORWARD_LIMIT,
+            upperAngle=HIP_BACKWARD_LIMIT,
         )
 
         self.right_hip_joint = self.simulation.world.CreateRevoluteJoint(
             bodyA=right_upper,
             bodyB=torso,
             anchor=RIGHT_HIP_POS,
-            collideConnected=False,
-            enableMotor=True,
-            motorSpeed=0,
-            maxMotorTorque=self.MAX_JOINT_TORQUE,
+            enableLimit=True,
+            lowerAngle=-HIP_FORWARD_LIMIT,
+            upperAngle=HIP_BACKWARD_LIMIT,
         )
 
         self.left_knee_joint = self.simulation.world.CreateRevoluteJoint(
             bodyA=left_upper,
             bodyB=left_lower,
             anchor=LEFT_KNEE_POS,
-            collideConnected=False,
-            enableMotor=True,
-            motorSpeed=0,
-            maxMotorTorque=self.MAX_JOINT_TORQUE,
+            enableLimit=True,
+            lowerAngle=-KNEE_BACKWARD_LIMIT,
+            upperAngle=KNEE_FORWARD_LIMIT,
         )
 
         self.right_knee_joint = self.simulation.world.CreateRevoluteJoint(
             bodyA=right_upper,
             bodyB=right_lower,
             anchor=RIGHT_KNEE_POS,
-            collideConnected=False,
-            enableMotor=True,
-            motorSpeed=0,
-            maxMotorTorque=self.MAX_JOINT_TORQUE,
+            enableLimit=True,
+            lowerAngle=-KNEE_BACKWARD_LIMIT,
+            upperAngle=KNEE_FORWARD_LIMIT,
         )
+
+        for joint in [self.left_hip_joint, self.right_hip_joint, self.left_knee_joint, self.right_knee_joint]:
+            joint.motorEnabled = True
+            joint.motorSpeed = 0
+            if BRAKE_ON_NO_INPUT:
+                joint.maxMotorTorque = self.MAX_JOINT_TORQUE
+            else:
+                joint.maxMotorTorque = 0
+
+
+        if PIN_HEAD:
+            self.head_pin_joint = self.simulation.world.CreateRevoluteJoint(
+                bodyA=torso,
+                bodyB=self.simulation.world.CreateStaticBody(position=(0,0)),
+                anchor=HEAD_POS,
+            )
 
 
     def _create_limb(self, posA, posB, radius=0.1, width=0.1, density=1.0, friction=0.5):
@@ -96,14 +118,16 @@ class Walker:
         body.CreateFixture(
             shape=rect_shape,
             density=density,
-            friction=friction
+            friction=friction,
+            groupIndex=-1
         )
 
         circle_shape = b2CircleShape(radius=radius)
         body.CreateFixture(
             shape=circle_shape,
             density=density,
-            friction=friction
+            friction=friction,
+            groupIndex=-1
         )
 
         body.ResetMassData()
@@ -121,6 +145,8 @@ class Walker:
             self.right_knee_joint
         ]):
             clamped_effort = min(1, max(-1, effort))
-            joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
-            # joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
-            # joint.maxMotorTorque = abs(clamped_effort) * self.MAX_JOINT_TORQUE
+            if BRAKE_ON_NO_INPUT:
+                joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
+            else:
+                joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
+                joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE

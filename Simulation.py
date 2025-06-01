@@ -8,8 +8,8 @@ import numpy as np
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
-PPM = 50.0
-TARGET_FPS = 60
+PPM = 75.0
+TARGET_FPS = 165
 TIME_STEP = 1.0 / TARGET_FPS
 VELOCITY_ITERATIONS = 8
 POSITION_ITERATIONS = 3
@@ -102,18 +102,22 @@ class Simulation:
     def update(self):
         keys = pygame.key.get_pressed()
         efforts = np.array([0, 0, 0, 0])
-        if keys[pygame.K_w]:
-            efforts += [1, -1, 1, -1]
-        if keys[pygame.K_s]:
-            efforts += [-1, 1, -1, 1]
         if keys[pygame.K_q]:
-            efforts += [1, 0, 1, 0]
+            efforts += [-1, 0, 0, 0]
         if keys[pygame.K_a]:
-            efforts += [-1, 0, -1, 0]
+            efforts += [1, 0, 0, 0]
+        if keys[pygame.K_w]:
+            efforts += [0, 0, 1, 0]
+        if keys[pygame.K_s]:
+            efforts += [0, 0, -1, 0]
         if keys[pygame.K_e]:
-            efforts += [0, -1, 0, -1]
+            efforts += [0, 0, 0, 1]
         if keys[pygame.K_d]:
-            efforts += [0, 1, 0, 1]
+            efforts += [0, 0, 0, -1]
+        if keys[pygame.K_r]:
+            efforts += [0, -1, 0, 0]
+        if keys[pygame.K_f]:
+            efforts += [0, 1, 0, 0]
         
 
         
