@@ -3,8 +3,9 @@ from Box2D import (
     b2World, b2PolygonShape, b2CircleShape, b2_staticBody, b2_dynamicBody
 )
 import math
-import Walker
+from Walker import Walker
 import numpy as np
+from WalkerInfo import WalkerInfo
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
@@ -22,7 +23,7 @@ class Simulation:
 
         self.world = b2World(gravity=(0, -10), doSleep=True)
 
-        self.walker = Walker.Walker((2,3), self)
+        self.walker = Walker((2,3), self)
 
         self.running = True
 
@@ -96,7 +97,7 @@ class Simulation:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 world_pos = self.screen_to_world(mouse_pos)
-                self.create_dynamic_box(world_pos, (1, 1), density=1.0, friction=0.5)
+                self.create_dynamic_box(world_pos, (0.25, 0.25), density=1.0, friction=0.5)
 
 
     def update(self):
@@ -121,7 +122,7 @@ class Simulation:
         
 
         
-        self.walker.update(efforts)
+        self.walker.update(TIME_STEP, efforts)
 
         self.world.Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS)
         self.clock.tick(TARGET_FPS)
@@ -137,6 +138,23 @@ class Simulation:
                     self.draw_polygon(fixture)
                 elif isinstance(fixture.shape, b2CircleShape):
                     self.draw_circle(fixture)
+
+
+        walker_info = self.walker.info()
+        
+        walker_info_texts = [
+            f"Altitude: {walker_info.headAltitude:.2f}",
+            f"H-speed: {walker_info.hSpeed:.2f}",
+            f"Torso angle: {walker_info.torsoAngle:.2f}",
+            f"Energy spent: {walker_info.energySpent:.2f}",
+            f"Distance walked: {walker_info.hDistance:.2f}",
+        ]
+        font = pygame.font.Font(None, 24)
+        y_offset = 10
+        for text in walker_info_texts:
+            text_surface = font.render(text, True, (0, 0, 0))
+            self.screen.blit(text_surface, (10, y_offset))
+            y_offset += text_surface.get_height()
 
         pygame.display.flip()
     
