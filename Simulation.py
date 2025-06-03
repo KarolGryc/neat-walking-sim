@@ -9,7 +9,7 @@ from WalkerInfo import WalkerInfo
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
-PPM = 75.0
+VERTICAL_FOV = 10
 TARGET_FPS = 165
 TIME_STEP = 1.0 / TARGET_FPS
 VELOCITY_ITERATIONS = 8
@@ -21,18 +21,23 @@ class Simulation:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
 
-        self.world = b2World(gravity=(0, -10), doSleep=True)
+        self.world = b2World(gravity=(0, -9.81), doSleep=True)
 
-        self.walker = Walker((2,3), self)
+        self.walker = Walker((2,1.5), self)
 
         self.running = True
+
+        self.PPM = SCREEN_HEIGHT / VERTICAL_FOV
+
+        self.cameraY = 4.5
+        self.cameraX = 0
 
         # ramps
         self.create_static_box((4, 6), (8, 0.25), angle=math.radians(-20), friction=0)
         self.create_static_box((8, 4.5), (1, 0.25), angle=math.radians(0), friction=0.9)
 
         # ground
-        self.create_static_box((SCREEN_WIDTH / PPM / 2, 0), (SCREEN_WIDTH / PPM, 0.5), friction=0.5)
+        self.create_static_box((50, -0.25), (100, 0.5), friction=0.5)
 
 
     def create_static_box(self, position, size, friction=0.8, angle=0):
@@ -46,7 +51,7 @@ class Simulation:
         )
         return body
 
-    def create_dynamic_box(self, position, size, density=1.0, friction=0.5):
+    def create_dynamic_box(self, position, size, density=1.0, friction=0.8):
         body = self.world.CreateDynamicBody(
             position=position,
             shapes=b2PolygonShape(box=(size[0] / 2, size[1] / 2))
@@ -60,33 +65,33 @@ class Simulation:
     
     def world_to_screen(self, world_coords):
         x, y = world_coords
-        return int(x * PPM), int(SCREEN_HEIGHT - y * PPM)
+        screen_x = int( (x - self.cameraX) * self.PPM) + SCREEN_WIDTH // 2
+        screen_y = int(-(y - self.cameraY) * self.PPM) + SCREEN_HEIGHT // 2
+        return screen_x, screen_y
 
     def screen_to_world(self, screen_coords):
         x, y = screen_coords
-        return (x / PPM, (SCREEN_HEIGHT - y) / PPM)
+        world_x = ( (x - SCREEN_WIDTH // 2) / self.PPM) + self.cameraX
+        world_y = (-(y - SCREEN_HEIGHT // 2)) / self.PPM + self.cameraY
+        return (world_x, world_y)
     
-    def draw_polygon(self, fixture, color=(0, 150, 255), border_color=(0, 0, 0), border_width=1):
+    def draw_polygon(self, fixture, color=(0, 150, 255), border_width=1):
         if not fixture.shape:
             return
         shape = fixture.shape
         vertices = [fixture.body.transform * v for v in shape.vertices]
         vertices = [self.world_to_screen(v) for v in vertices]
-        # Fill the polygon
         pygame.draw.polygon(self.screen, color, vertices)
-        # Draw the border
-        pygame.draw.polygon(self.screen, border_color, vertices, border_width)
+        pygame.draw.polygon(self.screen, (0, 0, 0), vertices, border_width)
     
-    def draw_circle(self, fixture, color=(0, 150, 255), border_color=(0, 0, 0), border_width=1):
+    def draw_circle(self, fixture, color=(0, 150, 255), border_width=1):
         if not fixture.shape:
             return
         shape = fixture.shape
         center = self.world_to_screen(fixture.body.position)
-        radius = int(shape.radius * PPM)
-        # Fill the circle
+        radius = int(shape.radius * self.PPM)
         pygame.draw.circle(self.screen, color, center, radius)
-        # Draw the border
-        pygame.draw.circle(self.screen, border_color, center, radius, border_width)
+        pygame.draw.circle(self.screen, (0, 0, 0), center, radius, border_width)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -120,12 +125,12 @@ class Simulation:
         if keys[pygame.K_f]:
             efforts += [0, 1, 0, 0]
         
-
-        
         self.walker.update(TIME_STEP, efforts)
 
         self.world.Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS)
         self.clock.tick(TARGET_FPS)
+
+        self.cameraX = self.walker.torso.position[0] + 3
 
     def draw(self):
         self.screen.fill((255, 255, 255))
