@@ -15,6 +15,8 @@ TIME_STEP = 1.0 / TARGET_FPS
 VELOCITY_ITERATIONS = 8
 POSITION_ITERATIONS = 3
 
+NUM_WALKERS = 4
+
 class Simulation:
     def __init__(self):
         pygame.init()
@@ -23,7 +25,7 @@ class Simulation:
 
         self.world = b2World(gravity=(0, -9.81), doSleep=True)
 
-        self.walker = Walker((2,1.5), self)
+        self._make_walkers()
 
         self.running = True
 
@@ -39,6 +41,9 @@ class Simulation:
         # ground
         self.create_static_box((50, -0.25), (100, 0.5), friction=0.5)
 
+    def _make_walkers(self):
+        walker_spacing = 1
+        self.walkers = [Walker((2 + i*walker_spacing, 1.5), self) for i in range(NUM_WALKERS)]
 
     def create_static_box(self, position, size, friction=0.8, angle=0):
         body = self.world.CreateStaticBody(
@@ -125,12 +130,13 @@ class Simulation:
         if keys[pygame.K_f]:
             efforts += [0, 1, 0, 0]
         
-        self.walker.update(TIME_STEP, efforts)
+        for walker in self.walkers:
+            walker.update(TIME_STEP, efforts)
 
         self.world.Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS)
         self.clock.tick(TARGET_FPS)
 
-        self.cameraX = self.walker.torso.position[0] + 3
+        self.cameraX = 3 + max(walker.torso.position[0] for walker in self.walkers)
 
     def draw(self):
         self.screen.fill((255, 255, 255))
@@ -145,7 +151,7 @@ class Simulation:
                     self.draw_circle(fixture)
 
 
-        walker_info = self.walker.info()
+        walker_info = self.walkers[0].info()
         
         walker_info_texts = [
             f"Altitude: {walker_info.headAltitude:.2f}",
