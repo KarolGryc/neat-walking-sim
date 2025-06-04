@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import numpy as np
 
 @dataclass
 class WalkerInfo:
@@ -12,3 +13,15 @@ class WalkerInfo:
     lKneeAngle: float
     rKneeAngle: float
     energySpent: float
+
+    def as_array(self):
+        return np.array([
+            self.headAltitude,
+            self.hDistance,
+            self.hSpeed,
+            self.torsoAngle,
+            self.lHipAngle,
+            self.rHipAngle,
+            self.lKneeAngle,
+            self.rKneeAngle,
+        ], dtype=np.float32)
