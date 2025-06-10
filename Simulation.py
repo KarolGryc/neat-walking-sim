@@ -103,6 +103,11 @@ class Simulation:
 
         self.screen.fill((255, 255, 255))
 
+        # meter lines
+        for i in range(100):
+            screenx = self.world_to_screen((i, 0))[0]
+            pygame.draw.line(self.screen, (200, 200, 200), (screenx, 0), (screenx, SCREEN_HEIGHT))
+
         for body in self.world.bodies:
             color = body.userData['color'] if body.userData and 'color' in body.userData else (0, 150, 255)
             for fixture in body.fixtures:
