@@ -89,13 +89,6 @@ class Simulation:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                self.running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = pygame.mouse.get_pos()
-                world_pos = self.screen_to_world(mouse_pos)
-                self.create_dynamic_box(world_pos, (0.25, 0.25), density=1.0, friction=0.5)
-
 
     def update(self, efforts):    
         for walker, effort in zip(self.walkers, efforts):
