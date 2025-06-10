@@ -140,11 +140,11 @@ class Walker:
                 joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
                 joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE
         
-        is_left_leg_forward = self.left_lower.position[0] < self.right_lower.position[0]
-        if is_left_leg_forward:
-            self.left_leg_forward += 1
-        else:
-            self.right_leg_forward += 1
+        # is_left_leg_forward = self.left_lower.position[0] < self.right_lower.position[0]
+        # if is_left_leg_forward:
+        #     self.left_leg_forward += 1
+        # else:
+        #     self.right_leg_forward += 1
 
     def info(self):
         distance = min([b.position[0] for b in self._bodies()])
@@ -182,8 +182,8 @@ class Walker:
         if is_right_knee_on_ground:
             multiplier *= 0.5
 
-        lead_deviation = abs(info.leftLegLead - 0.5)
-        fitness = multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
+        # lead_deviation = abs(info.leftLegLead - 0.5)
+        fitness = 4 + multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
         return fitness
     
     def destroy(self):

@@ -1,13 +1,17 @@
 from Simulation import Simulation
 import neat
 import random
+import pygame
 
 epoch = 0
-SKIP_FIRST_EPOCHS = 50
+best_fitness = -float('inf')
+
+SKIP_FIRST_EPOCHS = 0
 DISPLAY_EVERY_EPOCH = 10
 
 def eval_genomes(genomes, config):
     global epoch
+    global best_fitness
 
     # Reset simulation once for the whole generation
     sim.reset()
@@ -22,9 +26,9 @@ def eval_genomes(genomes, config):
 
     NUM_ITERATIONS = int(min(1500, 300 + (epoch / 15) * 100))
     # Run the simulation for all walkers in parallel
-    for _ in range(NUM_ITERATIONS):
+    for frame in range(NUM_ITERATIONS):
         # Get inputs for all walkers
-        inputs = [walker.info().as_array() for walker in sim.walkers]
+        inputs = sim.infos_array()
         
         # Process inputs through each genome's network
         all_outputs = []
@@ -39,12 +43,27 @@ def eval_genomes(genomes, config):
         # Update all walkers with their respective outputs
         sim.update(all_outputs)
 
-        if epoch >= SKIP_FIRST_EPOCHS and epoch % DISPLAY_EVERY_EPOCH == 0:
-            sim.draw()
+        if epoch >= SKIP_FIRST_EPOCHS:
+            if epoch % DISPLAY_EVERY_EPOCH == 0:
+                strings = [
+                    f"Epoch: {epoch}",
+                    f"Best fitness yet: {best_fitness:.2f}",
+                ]
+                sim.draw(strings)
+            elif frame == 0:
+                sim.screen.fill((64,64,64))
+                font = pygame.font.Font(None, 36)
+                text_surface = font.render(f"Epoch {epoch} in progress...", True, (192,192,192))
+                sim.screen.blit(text_surface, (100, 100))
+                pygame.display.flip()
+        
     
     # Evaluate fitness for each genome
     for i, (genome_id, genome) in enumerate(genomes):
-        genome.fitness = sim.walkers[i].fitness()
+        fitness = sim.walkers[i].fitness()
+        genome.fitness = fitness
+        if fitness > best_fitness:
+            best_fitness = fitness
         
     epoch += 1
 

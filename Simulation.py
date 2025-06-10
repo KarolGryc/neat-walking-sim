@@ -96,9 +96,9 @@ class Simulation:
 
         self.world.Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS)
 
-        self.cameraX = -3 + max(walker.torso.position[0] for walker in self.walkers)
+        self.cameraX = max(walker.torso.position[0] for walker in self.walkers)
 
-    def draw(self):
+    def draw(self, strings=[]):
         self.clock.tick(TARGET_FPS)
 
         self.screen.fill((255, 255, 255))
@@ -117,23 +117,14 @@ class Simulation:
                     self.draw_polygon(fixture, color)
                 elif isinstance(fixture.shape, b2CircleShape):
                     self.draw_circle(fixture, color)        # Find the walker that has traveled the furthest
-        
-        leader_idx = max(range(len(self.walkers)), key=lambda i: self.walkers[i].info().hDistance)
-        walker_info = self.walkers[leader_idx].info()
-        
-        walker_info_texts = [
-            f"Altitude: {walker_info.headAltitude:.2f}",
-            f"Energy spent: {walker_info.energySpent:.2f}",
-            f"Distance walked: {walker_info.hDistance:.2f}",
-            f"Time of left leg lead: {walker_info.leftLegLead:.2f}",
-        ]
+
         font = pygame.font.Font(None, 24)
         y_offset = 10
-        for text in walker_info_texts:
+        for text in strings:
             text_surface = font.render(text, True, (0, 0, 0))
             self.screen.blit(text_surface, (10, y_offset))
             y_offset += text_surface.get_height()
-
+            
         pygame.display.flip()
     
     def reset(self):
@@ -143,13 +134,5 @@ class Simulation:
         self.cameraX = CAM_START_X
         self.cameraY = CAM_START_Y
 
-    def run(self):
-        self.reset()
-        self.running = True
-        while self.running:
-            self.handle_events()
-            self.update([0,0,0,0])
-            self.draw()
-
-    def run_step(self, efforts):
-        self.update(efforts)
+    def infos_array(self):
+        return [walker.info().as_array() for walker in self.walkers]
