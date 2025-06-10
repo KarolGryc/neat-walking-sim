@@ -6,7 +6,7 @@ PIN_HEAD = False
 BRAKE_ON_NO_INPUT = True
 
 class Walker:
-    MAX_JOINT_SPEED = 2 * math.pi * 1.2
+    MAX_JOINT_SPEED = 2 * math.pi * 0.7
     MAX_JOINT_TORQUE = 12
 
     def __init__(self, position, simulation):
@@ -164,5 +164,8 @@ class Walker:
             energySpent=self.energySpent
         )
 
-
-
+    def fitness(self):
+        info = self.info()
+        multiplier = 1.0 if info.headAltitude > 0.5 else 0.5
+        fitness = info.hDistance * multiplier - info.energySpent
+        return fitness

@@ -15,7 +15,7 @@ TIME_STEP = 1.0 / TARGET_FPS
 VELOCITY_ITERATIONS = 8
 POSITION_ITERATIONS = 3
 
-NUM_WALKERS = 4
+NUM_WALKERS = 1
 
 class Simulation:
     def __init__(self):
@@ -155,8 +155,6 @@ class Simulation:
         
         walker_info_texts = [
             f"Altitude: {walker_info.headAltitude:.2f}",
-            f"H-speed: {walker_info.hSpeed:.2f}",
-            f"Torso angle: {walker_info.torsoAngle:.2f}",
             f"Energy spent: {walker_info.energySpent:.2f}",
             f"Distance walked: {walker_info.hDistance:.2f}",
         ]
