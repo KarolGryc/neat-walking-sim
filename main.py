@@ -60,6 +60,6 @@ if __name__ == "__main__":
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(10))
+    # p.add_reporter(neat.Checkpointer(40))
 
     winner = p.run(eval_genomes, 500)
