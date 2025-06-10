@@ -2,8 +2,8 @@ from Simulation import Simulation
 import neat
 
 iteration = 0
-SKIP_FIRST_EPOCHS = 50
-DISPLAY_EVERY_EPOCH = 10
+SKIP_FIRST_EPOCHS = 0
+DISPLAY_EVERY_EPOCH = 15
 
 def eval_genomes(genomes, config):
     global iteration

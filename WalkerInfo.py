@@ -3,7 +3,6 @@ import numpy as np
 
 @dataclass
 class WalkerInfo:
-    name: str
     headAltitude: float
     hDistance: float
     hSpeed: float
