@@ -1,5 +1,6 @@
 from Simulation import Simulation
 import neat
+import random
 
 iteration = 0
 SKIP_FIRST_EPOCHS = 50
@@ -49,6 +50,8 @@ def eval_genomes(genomes, config):
 
 if __name__ == "__main__":
     sim = Simulation()
+
+    random.seed(42)
     
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                             neat.DefaultSpeciesSet, neat.DefaultStagnation,

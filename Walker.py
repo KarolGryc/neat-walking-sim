@@ -183,7 +183,7 @@ class Walker:
             multiplier *= 0.0
 
         lead_deviation = abs(info.leftLegLead - 0.5)
-        fitness = multiplier * info.hDistance  - 0.2 * info.energySpent # - 2 * lead_deviation
+        fitness = multiplier * info.hDistance  - 0.2 * info.energySpent # - 0.5 * lead_deviation
         return fitness
     
     def destroy(self):
