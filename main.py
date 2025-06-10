@@ -19,8 +19,9 @@ def eval_genomes(genomes, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
 
+    NUM_ITERATIONS = int(min(1500, 300 + (iteration / 15) * 100))
     # Run the simulation for all walkers in parallel
-    for _ in range(int(300 + (iteration / 15) * 100)):
+    for _ in range(NUM_ITERATIONS):
         # Get inputs for all walkers
         inputs = [walker.info().as_array() for walker in sim.walkers]
         

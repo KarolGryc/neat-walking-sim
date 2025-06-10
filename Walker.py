@@ -1,10 +1,12 @@
-from Box2D import b2PolygonShape, b2CircleShape
+from Box2D import b2PolygonShape, b2CircleShape, b2RevoluteJoint
 from WalkerInfo import WalkerInfo
 import math
 
+BRAKE_ON_NO_INPUT = False
+
 class Walker:
-    MAX_JOINT_SPEED = 2 * math.pi * 0.6
-    MAX_JOINT_TORQUE = 8
+    MAX_JOINT_SPEED = 2 * math.pi * 1.2
+    MAX_JOINT_TORQUE = 10
 
     def __init__(self, position, simulation):
         self.simulation = simulation
@@ -12,8 +14,8 @@ class Walker:
         self.energySpent = 0.0
         self._build(position)
 
-        self.left_leg_forward = True
-        self.num_steps = 0
+        self.left_leg_forward = 1
+        self.right_leg_forward = 1
 
     def _build(self, position):
         x, y = position
@@ -90,7 +92,10 @@ class Walker:
         for joint in self._joints():
             joint.motorEnabled = True
             joint.motorSpeed = 0
-            joint.maxMotorTorque = self.MAX_JOINT_TORQUE
+            if BRAKE_ON_NO_INPUT:
+                joint.maxMotorTorque = self.MAX_JOINT_TORQUE
+            else:
+                joint.maxMotorTorque = 0
 
     def _create_limb(self, posA, posB, radius=0.1, width=0.1, friction=0.5, color=(0, 150, 255)):
         dx, dy = posB[0] - posA[0], posB[1] - posA[1]
@@ -129,12 +134,17 @@ class Walker:
         for (effort, joint) in zip(joint_efforts, self._joints()):
             clamped_effort = min(1, max(-1, effort * 2 - 1))
             self.energySpent += abs(clamped_effort) * dt
-            joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
+            if BRAKE_ON_NO_INPUT:
+                joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
+            else:
+                joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
+                joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE
         
-        new_left_leg_forward = self.left_lower.position[0] < self.right_lower.position[0]
-        if new_left_leg_forward != self.left_leg_forward:
-            self.left_leg_forward = new_left_leg_forward
-            self.num_steps += 1
+        is_left_leg_forward = self.left_lower.position[0] < self.right_lower.position[0]
+        if is_left_leg_forward:
+            self.left_leg_forward += 1
+        else:
+            self.right_leg_forward += 1
 
     def info(self):
         distance = min([b.position[0] for b in self._bodies()])
@@ -150,7 +160,11 @@ class Walker:
             lKneeAngle=self.left_knee_joint.angle,
             rKneeAngle=self.right_knee_joint.angle,
             energySpent=self.energySpent,
-            stepsTaken=self.num_steps
+            lHipSpeed=self.left_hip_joint.speed,
+            rHipSpeed=self.right_hip_joint.speed,
+            lKneeSpeed=self.left_knee_joint.speed,
+            rKneeSpeed=self.right_knee_joint.speed,
+            leftLegLead=(self.left_leg_forward / (self.left_leg_forward + self.right_leg_forward))
         )
 
     def fitness(self):
@@ -162,13 +176,14 @@ class Walker:
 
         multiplier = 1.0
         if is_tipped_over:
-            multiplier *= 0.05
+            multiplier *= 0.0
         if is_left_knee_on_ground:
-            multiplier *= 0.5
+            multiplier *= 0.0
         if is_right_knee_on_ground:
-            multiplier *= 0.5
+            multiplier *= 0.0
 
-        fitness = multiplier * (info.hDistance + 0.6 * info.stepsTaken) - 0.4 * info.energySpent
+        lead_deviation = abs(info.leftLegLead - 0.5)
+        fitness = multiplier * info.hDistance  - 0.2 * info.energySpent # - 2 * lead_deviation
         return fitness
     
     def destroy(self):
