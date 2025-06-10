@@ -51,7 +51,7 @@ def eval_genomes(genomes, config):
 if __name__ == "__main__":
     sim = Simulation()
 
-    random.seed(42)
+    random.seed(1000)
     
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                             neat.DefaultSpeciesSet, neat.DefaultStagnation,

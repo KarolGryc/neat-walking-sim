@@ -5,8 +5,8 @@ import math
 BRAKE_ON_NO_INPUT = False
 
 class Walker:
-    MAX_JOINT_SPEED = 2 * math.pi * 1.2
-    MAX_JOINT_TORQUE = 10
+    MAX_JOINT_SPEED = 2 * math.pi * 0.7
+    MAX_JOINT_TORQUE = 7
 
     def __init__(self, position, simulation):
         self.simulation = simulation
@@ -176,14 +176,14 @@ class Walker:
 
         multiplier = 1.0
         if is_tipped_over:
-            multiplier *= 0.0
+            multiplier *= 0.05
         if is_left_knee_on_ground:
-            multiplier *= 0.0
+            multiplier *= 0.5
         if is_right_knee_on_ground:
-            multiplier *= 0.0
+            multiplier *= 0.5
 
         lead_deviation = abs(info.leftLegLead - 0.5)
-        fitness = multiplier * info.hDistance  - 0.2 * info.energySpent # - 0.5 * lead_deviation
+        fitness = multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
         return fitness
     
     def destroy(self):
