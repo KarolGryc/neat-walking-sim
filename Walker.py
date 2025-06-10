@@ -37,17 +37,15 @@ class Walker:
         KNEE_FORWARD_LIMIT = math.radians(0)
         KNEE_BACKWARD_LIMIT = math.radians(100)
 
-        TORSO_COLOR = (0, 150, 255)
-        LEFT_COLOR = (0, 85, 255)
-        RIGHT_COLOR = (0, 213, 255)
+        LEFT_COLOR = (0, 100, 255)
 
         # Create the upper legs
         self.left_upper = self._create_limb(LEFT_KNEE_POS, LEFT_HIP_POS, radius=0.1, width=0.2, color=LEFT_COLOR)
-        self.right_upper = self._create_limb(RIGHT_KNEE_POS, RIGHT_HIP_POS, radius=0.1, width=0.2, color=RIGHT_COLOR)
+        self.right_upper = self._create_limb(RIGHT_KNEE_POS, RIGHT_HIP_POS, radius=0.1, width=0.2)
 
         # Create the lower legs
         self.left_lower = self._create_limb(LEFT_FOOT_POS, LEFT_KNEE_POS, radius=0.1, width=0.15, color=LEFT_COLOR)
-        self.right_lower = self._create_limb(RIGHT_FOOT_POS, RIGHT_KNEE_POS, radius=0.1, width=0.15, color=RIGHT_COLOR)
+        self.right_lower = self._create_limb(RIGHT_FOOT_POS, RIGHT_KNEE_POS, radius=0.1, width=0.15)
 
         # Create the torso
         self.torso = self._create_limb(HEAD_POS, position, radius=0.3, width=0.3)
@@ -94,7 +92,7 @@ class Walker:
             joint.motorSpeed = 0
             joint.maxMotorTorque = self.MAX_JOINT_TORQUE
 
-    def _create_limb(self, posA, posB, radius=0.1, width=0.1, density=1.0, friction=0.5, color=(0, 150, 255)):
+    def _create_limb(self, posA, posB, radius=0.1, width=0.1, friction=0.5, color=(0, 150, 255)):
         dx, dy = posB[0] - posA[0], posB[1] - posA[1]
         length = (dx**2 + dy**2)**0.5
         angle = math.atan2(dy, dx) - math.pi/2
@@ -108,7 +106,7 @@ class Walker:
         rect_shape.SetAsBox(width / 2, length / 2, (dx/2, dy/2), angle)
         body.CreateFixture(
             shape=rect_shape,
-            density=density,
+            density=1.0,
             friction=friction,
             groupIndex=-1
         )
@@ -116,7 +114,7 @@ class Walker:
         circle_shape = b2CircleShape(radius=radius)
         body.CreateFixture(
             shape=circle_shape,
-            density=density,
+            density=1.0,
             friction=friction,
             groupIndex=-1
         )

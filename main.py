@@ -2,7 +2,7 @@ from Simulation import Simulation
 import neat
 
 iteration = 0
-SKIP_FIRST_EPOCHS = 0
+SKIP_FIRST_EPOCHS = 50
 DISPLAY_EVERY_EPOCH = 10
 
 def eval_genomes(genomes, config):

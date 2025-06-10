@@ -104,15 +104,14 @@ class Simulation:
         self.screen.fill((255, 255, 255))
 
         for body in self.world.bodies:
-            if body.userData and 'color' in body.userData:
-                color = body.userData['color']
-                for fixture in body.fixtures:
-                    if not fixture.shape:
-                        continue
-                    elif isinstance(fixture.shape, b2PolygonShape):
-                        self.draw_polygon(fixture, color)
-                    elif isinstance(fixture.shape, b2CircleShape):
-                        self.draw_circle(fixture, color)        # Find the walker that has traveled the furthest
+            color = body.userData['color'] if body.userData and 'color' in body.userData else (0, 150, 255)
+            for fixture in body.fixtures:
+                if not fixture.shape:
+                    continue
+                elif isinstance(fixture.shape, b2PolygonShape):
+                    self.draw_polygon(fixture, color)
+                elif isinstance(fixture.shape, b2CircleShape):
+                    self.draw_circle(fixture, color)        # Find the walker that has traveled the furthest
         
         leader_idx = max(range(len(self.walkers)), key=lambda i: self.walkers[i].info().hDistance)
         walker_info = self.walkers[leader_idx].info()
