@@ -10,12 +10,13 @@ from WalkerInfo import WalkerInfo
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 VERTICAL_FOV = 10
-TARGET_FPS = 165
+TARGET_FPS = 100
 TIME_STEP = 1.0 / TARGET_FPS
 VELOCITY_ITERATIONS = 8
 POSITION_ITERATIONS = 3
 
-NUM_WALKERS = 1
+CAM_START_X = 0
+CAM_START_Y = 4.5
 
 class Simulation:
     def __init__(self):
@@ -25,47 +26,33 @@ class Simulation:
 
         self.world = b2World(gravity=(0, -9.81), doSleep=True)
 
-        self._make_walkers()
-
         self.running = True
 
         self.PPM = SCREEN_HEIGHT / VERTICAL_FOV
 
-        self.cameraY = 4.5
-        self.cameraX = 0
+        self.cameraY = CAM_START_Y
+        self.cameraX = CAM_START_X
 
-        # ramps
-        self.create_static_box((4, 6), (8, 0.25), angle=math.radians(-20), friction=0)
-        self.create_static_box((8, 4.5), (1, 0.25), angle=math.radians(0), friction=0.9)
+        self.walkers = []
 
         # ground
-        self.create_static_box((50, -0.25), (100, 0.5), friction=0.5)
+        self.create_static_box((50, -0.25), (100, 0.5), friction=0.4, restitution=0.1)
 
-    def _make_walkers(self):
-        walker_spacing = 1
-        self.walkers = [Walker((2 + i*walker_spacing, 1.5), self) for i in range(NUM_WALKERS)]
+        self.reset()
 
-    def create_static_box(self, position, size, friction=0.8, angle=0):
+    def make_walkers(self, num_walkers):
+        self.walkers = [Walker((2, 1.5), self) for _ in range(num_walkers)]
+
+    def create_static_box(self, position, size, friction=0.8, restitution=0.4, angle=0):
         body = self.world.CreateStaticBody(
             position=position,
             angle=angle,
         )
         body.CreateFixture(
             shape=b2PolygonShape(box=(size[0] / 2, size[1] / 2)),
-            friction=friction
+            friction=friction,
+            restitution=restitution
         )
-        return body
-
-    def create_dynamic_box(self, position, size, density=1.0, friction=0.8):
-        body = self.world.CreateDynamicBody(
-            position=position,
-            shapes=b2PolygonShape(box=(size[0] / 2, size[1] / 2))
-        )
-        fixture = body.fixtures[0]
-        fixture.density = density
-        fixture.friction = friction
-
-        body.ResetMassData()
         return body
     
     def world_to_screen(self, world_coords):
@@ -110,33 +97,14 @@ class Simulation:
                 self.create_dynamic_box(world_pos, (0.25, 0.25), density=1.0, friction=0.5)
 
 
-    def update(self):
-        keys = pygame.key.get_pressed()
-        efforts = np.array([0, 0, 0, 0])
-        if keys[pygame.K_q]:
-            efforts += [-1, 0, 0, 0]
-        if keys[pygame.K_a]:
-            efforts += [1, 0, 0, 0]
-        if keys[pygame.K_w]:
-            efforts += [0, 0, 1, 0]
-        if keys[pygame.K_s]:
-            efforts += [0, 0, -1, 0]
-        if keys[pygame.K_e]:
-            efforts += [0, 0, 0, 1]
-        if keys[pygame.K_d]:
-            efforts += [0, 0, 0, -1]
-        if keys[pygame.K_r]:
-            efforts += [0, -1, 0, 0]
-        if keys[pygame.K_f]:
-            efforts += [0, 1, 0, 0]
-        
-        for walker in self.walkers:
-            walker.update(TIME_STEP, efforts)
+    def update(self, efforts):    
+        for walker, effort in zip(self.walkers, efforts):
+            walker.update(TIME_STEP, effort)
 
         self.world.Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS)
-        self.clock.tick(TARGET_FPS)
+        # self.clock.tick(TARGET_FPS)
 
-        self.cameraX = 3 + max(walker.torso.position[0] for walker in self.walkers)
+        self.cameraX = 1 + max(walker.torso.position[0] for walker in self.walkers)
 
     def draw(self):
         self.screen.fill((255, 255, 255))
@@ -148,10 +116,10 @@ class Simulation:
                 elif isinstance(fixture.shape, b2PolygonShape):
                     self.draw_polygon(fixture)
                 elif isinstance(fixture.shape, b2CircleShape):
-                    self.draw_circle(fixture)
-
-
-        walker_info = self.walkers[0].info()
+                    self.draw_circle(fixture)        # Find the walker that has traveled the furthest
+        leading_walker_idx = max(range(len(self.walkers)), 
+                                key=lambda i: self.walkers[i].info().hDistance)
+        walker_info = self.walkers[leading_walker_idx].info()
         
         walker_info_texts = [
             f"Altitude: {walker_info.headAltitude:.2f}",
@@ -167,10 +135,20 @@ class Simulation:
 
         pygame.display.flip()
     
+    def reset(self):
+        self.world.ClearForces()
+        for walker in self.walkers:
+            walker.destroy()
+        self.cameraX = CAM_START_X
+        self.cameraY = CAM_START_Y
+
     def run(self):
+        self.reset()
+        self.running = True
         while self.running:
             self.handle_events()
-            self.update()
+            self.update([0,0,0,0])
             self.draw()
 
-        pygame.quit()
+    def run_step(self, efforts):
+        self.update(efforts)

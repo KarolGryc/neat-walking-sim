@@ -1,13 +1,10 @@
-from Box2D import b2PolygonShape, b2CircleShape, b2RevoluteJoint
+from Box2D import b2PolygonShape, b2CircleShape
 from WalkerInfo import WalkerInfo
 import math
 
-PIN_HEAD = False
-BRAKE_ON_NO_INPUT = True
-
 class Walker:
-    MAX_JOINT_SPEED = 2 * math.pi * 0.7
-    MAX_JOINT_TORQUE = 12
+    MAX_JOINT_SPEED = 2 * math.pi * 0.6
+    MAX_JOINT_TORQUE = 8
 
     def __init__(self, position, simulation):
         self.simulation = simulation
@@ -85,21 +82,10 @@ class Walker:
             upperAngle=KNEE_FORWARD_LIMIT,
         )
 
-        for joint in [self.left_hip_joint, self.right_hip_joint, self.left_knee_joint, self.right_knee_joint]:
+        for joint in self._joints():
             joint.motorEnabled = True
             joint.motorSpeed = 0
-            if BRAKE_ON_NO_INPUT:
-                joint.maxMotorTorque = self.MAX_JOINT_TORQUE
-            else:
-                joint.maxMotorTorque = 0
-
-
-        if PIN_HEAD:
-            self.head_pin_joint = self.simulation.world.CreateRevoluteJoint(
-                bodyA=self.torso,
-                bodyB=self.simulation.world.CreateStaticBody(position=(0,0)),
-                anchor=HEAD_POS,
-            )
+            joint.maxMotorTorque = self.MAX_JOINT_TORQUE
 
     def _create_limb(self, posA, posB, radius=0.1, width=0.1, density=1.0, friction=0.5):
 
@@ -133,28 +119,20 @@ class Walker:
         return body
     
     def update(self, dt, joint_efforts):
-        if len(joint_efforts) != 4:
-            raise ValueError("Expected 4 joint efforts for the walker.")
+        assert len(joint_efforts) == 4, "Expected 4 joint efforts for the walker."
     
-        for (effort, joint) in zip(joint_efforts, [
-            self.left_hip_joint,
-            self.right_hip_joint,
-            self.left_knee_joint,
-            self.right_knee_joint
-        ]):
-            clamped_effort = min(1, max(-1, effort))
+        for (effort, joint) in zip(joint_efforts, self._joints()):
+            clamped_effort = min(1, max(-1, effort * 2 - 1))
             self.energySpent += abs(clamped_effort) * dt
-            if BRAKE_ON_NO_INPUT:
-                joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
-            else:
-                joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
-                joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE
+            joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
 
     def info(self):
+        distance = min([b.position[0] for b in self._bodies()])
+
         return WalkerInfo(
             name="Stefan",
             headAltitude=self.torso.position[1],
-            hDistance=self.torso.position[0] - self.startX,
+            hDistance=distance-self.startX,
             hSpeed=self.torso.linearVelocity[0],
             torsoAngle=self.torso.angle,
             lHipAngle=self.left_hip_joint.angle,
@@ -166,6 +144,30 @@ class Walker:
 
     def fitness(self):
         info = self.info()
-        multiplier = 1.0 if info.headAltitude > 0.5 else 0.5
-        fitness = info.hDistance * multiplier - info.energySpent
+        multiplier = 1.0 if info.headAltitude > 0.5 else 0
+        fitness = info.hDistance * multiplier - info.energySpent * 0.1
         return fitness
+    
+    def destroy(self):
+        for joint in self._joints():
+            self.simulation.world.DestroyJoint(joint)
+
+        for body in [self.left_upper, self.right_upper, self.left_lower, self.right_lower, self.torso]:
+            self.simulation.world.DestroyBody(body)
+    
+    def _joints(self):
+        return [
+            self.left_hip_joint,
+            self.right_hip_joint,
+            self.left_knee_joint,
+            self.right_knee_joint
+        ]
+    
+    def _bodies(self):
+        return [
+            self.left_upper,
+            self.right_upper,
+            self.left_lower,
+            self.right_lower,
+            self.torso
+        ]
