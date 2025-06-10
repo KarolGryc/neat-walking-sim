@@ -2,6 +2,8 @@ from Simulation import Simulation
 import neat
 
 iteration = 0
+SKIP_FIRST_EPOCHS = 50
+DISPLAY_EVERY_EPOCH = 10
 
 def eval_genomes(genomes, config):
     global iteration
@@ -18,7 +20,7 @@ def eval_genomes(genomes, config):
         nets.append(net)
 
     # Run the simulation for all walkers in parallel
-    for _ in range(int(300 + (iteration / 10) * 100)):
+    for _ in range(int(300 + (iteration / 15) * 100)):
         # Get inputs for all walkers
         inputs = [walker.info().as_array() for walker in sim.walkers]
         
@@ -35,7 +37,7 @@ def eval_genomes(genomes, config):
         # Update all walkers with their respective outputs
         sim.update(all_outputs)
 
-        if iteration % 10 == 0:
+        if iteration >= SKIP_FIRST_EPOCHS and iteration % DISPLAY_EVERY_EPOCH == 0:
             sim.draw()
     
     # Evaluate fitness for each genome

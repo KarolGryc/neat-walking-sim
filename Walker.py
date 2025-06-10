@@ -12,13 +12,16 @@ class Walker:
         self.energySpent = 0.0
         self._build(position)
 
+        self.left_leg_forward = True
+        self.num_steps = 0
+
     def _build(self, position):
         x, y = position
         self.startX = x
 
         HEAD_POS = (x, y + 1)
 
-        HIP_RADIUS = 0.0
+        HIP_RADIUS = 0.1
 
         LEFT_HIP_POS = (x-HIP_RADIUS, y+0.05)
         RIGHT_HIP_POS = (x+HIP_RADIUS, y+0.05)
@@ -88,7 +91,6 @@ class Walker:
             joint.maxMotorTorque = self.MAX_JOINT_TORQUE
 
     def _create_limb(self, posA, posB, radius=0.1, width=0.1, density=1.0, friction=0.5):
-
         dx, dy = posB[0] - posA[0], posB[1] - posA[1]
         length = (dx**2 + dy**2)**0.5
         angle = math.atan2(dy, dx) - math.pi/2
@@ -125,6 +127,11 @@ class Walker:
             clamped_effort = min(1, max(-1, effort * 2 - 1))
             self.energySpent += abs(clamped_effort) * dt
             joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
+        
+        new_left_leg_forward = self.left_lower.position[0] < self.right_lower.position[0]
+        if new_left_leg_forward != self.left_leg_forward:
+            self.left_leg_forward = new_left_leg_forward
+            self.num_steps += 1
 
     def info(self):
         distance = min([b.position[0] for b in self._bodies()])
@@ -139,13 +146,26 @@ class Walker:
             rHipAngle=self.right_hip_joint.angle,
             lKneeAngle=self.left_knee_joint.angle,
             rKneeAngle=self.right_knee_joint.angle,
-            energySpent=self.energySpent
+            energySpent=self.energySpent,
+            stepsTaken=self.num_steps
         )
 
     def fitness(self):
+        is_tipped_over = self.torso.position[1] < 0.5
+        is_left_knee_on_ground = self.left_upper.position[1] < 0.2
+        is_right_knee_on_ground = self.right_upper.position[1] < 0.2
+
         info = self.info()
-        multiplier = 1.0 if info.headAltitude > 0.5 else 0
-        fitness = info.hDistance * multiplier - info.energySpent * 0.1
+
+        multiplier = 1.0
+        if is_tipped_over:
+            multiplier *= 0.05
+        if is_left_knee_on_ground:
+            multiplier *= 0.5
+        if is_right_knee_on_ground:
+            multiplier *= 0.5
+
+        fitness = multiplier * info.hDistance - info.energySpent * 0.3 + multiplier * info.stepsTaken * 0.01
         return fitness
     
     def destroy(self):

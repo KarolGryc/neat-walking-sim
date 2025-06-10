@@ -102,11 +102,12 @@ class Simulation:
             walker.update(TIME_STEP, effort)
 
         self.world.Step(TIME_STEP, VELOCITY_ITERATIONS, POSITION_ITERATIONS)
-        # self.clock.tick(TARGET_FPS)
 
         self.cameraX = 1 + max(walker.torso.position[0] for walker in self.walkers)
 
     def draw(self):
+        self.clock.tick(TARGET_FPS)
+
         self.screen.fill((255, 255, 255))
 
         for body in self.world.bodies:
@@ -125,6 +126,7 @@ class Simulation:
             f"Altitude: {walker_info.headAltitude:.2f}",
             f"Energy spent: {walker_info.energySpent:.2f}",
             f"Distance walked: {walker_info.hDistance:.2f}",
+            f"Steps taken: {walker_info.stepsTaken}",
         ]
         font = pygame.font.Font(None, 24)
         y_offset = 10

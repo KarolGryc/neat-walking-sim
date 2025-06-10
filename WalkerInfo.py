@@ -13,6 +13,7 @@ class WalkerInfo:
     lKneeAngle: float
     rKneeAngle: float
     energySpent: float
+    stepsTaken: int
 
     def as_array(self):
         return np.array([
