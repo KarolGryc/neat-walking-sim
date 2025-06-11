@@ -21,6 +21,9 @@ class Walker:
         x, y = position
         self.startX = x
 
+        self._height_score = 0.0
+        self._total_time = 0.0
+
         HEAD_POS = (x, y + 1)
 
         HIP_RADIUS = 0.0
@@ -99,7 +102,7 @@ class Walker:
 
     def _create_limb(self, posA, posB, radius=0.1, width=0.1, friction=0.5, color=(0, 150, 255)):
         dx, dy = posB[0] - posA[0], posB[1] - posA[1]
-        length = (dx**2 + dy**2)**0.5
+        length = math.sqrt(dx * dx + dy * dy)
         angle = math.atan2(dy, dx) - math.pi/2
 
         body = self.simulation.world.CreateDynamicBody(
@@ -131,6 +134,8 @@ class Walker:
     def update(self, dt, joint_efforts):
         assert len(joint_efforts) == 4, "Expected 4 joint efforts for the walker."
     
+        self._total_time += dt
+        self._height_score += self.torso.position[1] * dt
         for (effort, joint) in zip(joint_efforts, self._joints()):
             clamped_effort = min(1, max(-1, effort * 2 - 1))
             self.energySpent += abs(clamped_effort) * dt
@@ -150,7 +155,6 @@ class Walker:
         distance = min([b.position[0] for b in self._bodies()])
 
         return WalkerInfo(
-            name="Stefan",
             headAltitude=self.torso.position[1],
             hDistance=distance-self.startX,
             hSpeed=self.torso.linearVelocity[0],
@@ -168,22 +172,22 @@ class Walker:
         )
 
     def fitness(self):
-        is_tipped_over = self.torso.position[1] < 0.5
-        is_left_knee_on_ground = self.left_upper.position[1] < 0.2
-        is_right_knee_on_ground = self.right_upper.position[1] < 0.2
-
         info = self.info()
 
-        multiplier = 1.0
-        if is_tipped_over:
-            multiplier *= 0.05
-        if is_left_knee_on_ground:
-            multiplier *= 0.5
-        if is_right_knee_on_ground:
-            multiplier *= 0.5
+        HEIGHT_WEIGHT = 1
+        DISTANCE_WEIGHT = 1
+        fitness = HEIGHT_WEIGHT * self._height_score / self._total_time + DISTANCE_WEIGHT * info.hDistance / self._total_time
+        # multiplier = 1.0
+        # if is_tipped_over:
+        #     multiplier *= 0.05
+        # if is_left_knee_on_ground:
+        #     multiplier *= 0.5
+        # if is_right_knee_on_ground:
+        #     multiplier *= 0.5
 
         # lead_deviation = abs(info.leftLegLead - 0.5)
-        fitness = 4 + multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
+        # fitness = 4 + multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
+        # fitness = multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
         return fitness
     
     def destroy(self):
