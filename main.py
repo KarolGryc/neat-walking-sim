@@ -43,19 +43,18 @@ def eval_genomes(genomes, config):
         # Update all walkers with their respective outputs
         sim.update(all_outputs)
 
-        if epoch >= SKIP_FIRST_EPOCHS:
-            if epoch % DISPLAY_EVERY_EPOCH == 0:
-                strings = [
-                    f"Epoch: {epoch}",
-                    f"Best fitness yet: {best_fitness:.2f}",
-                ]
-                sim.draw(strings)
-            elif frame == 0:
-                sim.screen.fill((64,64,64))
-                font = pygame.font.Font(None, 36)
-                text_surface = font.render(f"Epoch {epoch} in progress...", True, (192,192,192))
-                sim.screen.blit(text_surface, (100, 100))
-                pygame.display.flip()
+        if epoch >= SKIP_FIRST_EPOCHS and epoch % DISPLAY_EVERY_EPOCH == 0:
+            strings = [
+                f"Epoch: {epoch}",
+                f"Best fitness yet: {best_fitness:.2f}",
+            ]
+            sim.draw(strings)
+        elif frame == 0:
+            sim.screen.fill((64,64,64))
+            font = pygame.font.Font(None, 36)
+            text_surface = font.render(f"Epoch {epoch} in progress...", True, (192,192,192))
+            sim.screen.blit(text_surface, (100, 100))
+            pygame.display.flip()
         
     
     # Evaluate fitness for each genome
