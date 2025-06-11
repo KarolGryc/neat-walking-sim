@@ -6,7 +6,7 @@ import pygame
 epoch = 0
 best_fitness = -float('inf')
 
-SKIP_FIRST_EPOCHS = 0
+SKIP_FIRST_EPOCHS = 50
 DISPLAY_EVERY_EPOCH = 10
 
 def eval_genomes(genomes, config):
@@ -93,10 +93,6 @@ if __name__ == "__main__":
         sim.handle_events()
         if not sim.running:
             exit(1)
-        
+         
         sim.update([outputs])
         sim.draw()
-
-        if sim.walkers[0].info().headAltitude < 0.4:
-            print("Walker fell down, stopping simulation.")
-            break
