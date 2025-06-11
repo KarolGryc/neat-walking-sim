@@ -16,7 +16,7 @@ class WalkerInfo:
     rHipSpeed: float
     lKneeSpeed: float
     rKneeSpeed: float
-    leftLegLead: float
+    # leftLegLead: float
 
     def as_array(self):
         return np.array([
@@ -32,5 +32,5 @@ class WalkerInfo:
             self.rHipSpeed,
             self.lKneeSpeed,
             self.rKneeSpeed,
-            self.leftLegLead
+            # self.leftLegLead
         ], dtype=np.float32)

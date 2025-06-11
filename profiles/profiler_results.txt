@@ -1,0 +1,50 @@
+﻿pygame 2.6.1 (SDL 2.28.4, Python 3.13.3)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+         158345999 function calls (158339058 primitive calls) in 93.459 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  1423800   29.591    0.000   54.864    0.000 feed_forward.py:12(activate)
+  1423800   12.842    0.000   16.761    0.000 Walker.py:134(update)
+  1427550   10.685    0.000   11.653    0.000 Walker.py:154(info)
+ 63237099   10.382    0.000   10.382    0.000 {method 'append' of 'list' objects}
+  6995038    5.251    0.000    9.005    0.000 activations.py:11(sigmoid_activation)
+  6995038    1.745    0.000    5.798    0.000 aggregations.py:20(sum_aggregation)
+  6995216    4.056    0.000    4.059    0.000 {built-in method builtins.sum}
+ 12922897    2.461    0.000    3.511    0.000 {built-in method builtins.max}
+       25    0.013    0.001    2.799    0.112 reproduction.py:84(reproduce)
+  1423800    0.805    0.000    2.700    0.000 WalkerInfo.py:21(as_array)
+ 14329177    2.549    0.000    2.550    0.000 {built-in method builtins.min}
+  1423878    1.895    0.000    1.895    0.000 {built-in method numpy.array}
+     3700    0.068    0.000    1.782    0.000 genome.py:267(mutate)
+   212958    0.337    0.000    1.617    0.000 genes.py:48(mutate)
+ 11807373    1.607    0.000    1.607    0.000 {built-in method builtins.abs}
+  6995039    1.258    0.000    1.258    0.000 {built-in method math.exp}
+  1433292    1.049    0.000    1.049    0.000 Simulation.py:99(<genexpr>)
+     3700    0.143    0.000    0.982    0.000 genome.py:234(configure_crossover)
+   233233    0.246    0.000    0.915    0.000 attributes.py:65(mutate_value)
+       17    0.001    0.000    0.764    0.045 __init__.py:1(<module>)
+     3750    0.190    0.000    0.748    0.000 feed_forward.py:28(create)
+   193634    0.384    0.000    0.721    0.000 genes.py:60(crossover)
+4339685/4339617    0.648    0.000    0.648    0.000 {built-in method builtins.len}
+        2    0.000    0.000    0.605    0.303 Box2D.py:2512(CreateFixture)
+     26/2    0.002    0.000    0.605    0.303 Box2D.py:2650(__del__)
+   123753    0.184    0.000    0.555    0.000 Box2D.py:99(_init_kwargs)
+       26    0.014    0.001    0.554    0.021 species.py:65(speciate)
+     7624    0.008    0.000    0.523    0.000 species.py:34(__call__)
+     7624    0.234    0.000    0.513    0.000 genome.py:397(distance)
+  1276529    0.252    0.000    0.429    0.000 {built-in method builtins.setattr}
+  2689137    0.408    0.000    0.409    0.000 {built-in method builtins.getattr}
+  1427550    0.340    0.000    0.340    0.000 Walker.py:207(_bodies)
+    240/3    0.002    0.000    0.328    0.109 <frozen importlib._bootstrap>:1349(_find_and_load)
+    240/3    0.001    0.000    0.328    0.109 <frozen importlib._bootstrap>:1304(_find_and_load_unlocked)
+    229/3    0.001    0.000    0.326    0.109 <frozen importlib._bootstrap>:911(_load_unlocked)
+    173/3    0.001    0.000    0.326    0.109 <frozen importlib._bootstrap_external>:1020(exec_module)
+    563/6    0.003    0.000    0.324    0.054 <frozen importlib._bootstrap>:480(_call_with_frames_removed)
+     3750    0.069    0.000    0.323    0.000 graphs.py:58(feed_forward_layers)
+  1427550    0.297    0.000    0.297    0.000 <string>:2(__init__)
+  1431150    0.291    0.000    0.291    0.000 Walker.py:199(_joints)
+   207322    0.177    0.000    0.282    0.000 random.py:555(gauss)
+        1    0.000    0.000    0.279    0.279 Box2D.py:3146(CreateStaticBody)
+   207322    0.157    0.000    0.276    0.000 attributes.py:41(clamp)

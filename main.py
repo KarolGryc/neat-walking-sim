@@ -1,6 +1,7 @@
 from Simulation import Simulation
 import neat
 import random
+import time
 
 epoch = 0
 SKIP_FIRST_EPOCHS = 50
@@ -48,6 +49,24 @@ def eval_genomes(genomes, config):
         
     epoch += 1
 
+def playback_genome(simulation, genome):
+    simulation.reset()
+    simulation.make_walkers(1)
+    best_genome = neat.nn.FeedForwardNetwork.create(winner, config)
+    
+    while simulation.running:
+        inputs = simulation.walkers[0].info().as_array()
+        outputs = best_genome.activate(inputs)
+        simulation.handle_events()
+        
+        simulation.update([outputs])
+        simulation.draw()
+
+        if simulation.walkers[0].info().headAltitude < 0.4:
+            time.sleep(3)
+            print("Walker fell down, stopping simulation.")
+            break
+
 if __name__ == "__main__":
     sim = Simulation()
 
@@ -60,25 +79,10 @@ if __name__ == "__main__":
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    # p.add_reporter(neat.Checkpointer(40))
+    p.add_reporter(neat.Checkpointer(60))
 
-    winner = p.run(eval_genomes, 200)
+    winner = p.run(eval_genomes, 2500)
 
     # playback the best genome
-    sim.reset()
-    sim.make_walkers(1)
-    best_genome = neat.nn.FeedForwardNetwork.create(winner, config)
-    
-    while sim.running:
-        inputs = sim.walkers[0].info().as_array()
-        outputs = best_genome.activate(inputs)
-        sim.handle_events()
-        if not sim.running:
-            exit(1)
-        
-        sim.update([outputs])
-        sim.draw()
-
-        if sim.walkers[0].info().headAltitude < 0.4:
-            print("Walker fell down, stopping simulation.")
-            break
+    # best_genome = neat.nn.FeedForwardNetwork.create(winner, config)
+    # playback_genome(sim, best_genome)
