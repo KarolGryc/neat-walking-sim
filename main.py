@@ -1,74 +1,97 @@
 from Simulation import Simulation
+from WorldDrawer import WorldDrawer
 import neat
 import random
 import pygame
+import multiprocessing
 
 epoch = 0
 best_fitness = -float('inf')
 
-SKIP_FIRST_EPOCHS = 50
+SKIP_FIRST_EPOCHS = 100
 DISPLAY_EVERY_EPOCH = 10
+NUM_WORKERS = multiprocessing.cpu_count() - 1
+
+sims = [Simulation() for _ in range(NUM_WORKERS)]
+drawer = WorldDrawer()
+
+
+def simulation_worker(simulation, networks, num_steps):
+    for _ in range(num_steps):
+        inputs = simulation.infos_array()
+        all_outputs = [net.activate(inputs[i]) for i, net in enumerate(networks)]
+        simulation.update(all_outputs)
+    return [walker.fitness() for walker in simulation.walkers]
+
+
 
 def eval_genomes(genomes, config):
     global epoch
     global best_fitness
+    global sim
+    global drawer
 
-    # Reset simulation once for the whole generation
-    sim.reset()
-    sim.make_walkers(len(genomes))
-    
     # Create a neural network for each genome
     nets = []
+    num_genomes = 0
     for genome_id, genome in genomes:
-        genome.fitness = 0.0
+        genome.fitness = -1000
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
+        num_genomes += 1
 
     NUM_ITERATIONS = int(min(1500, 300 + (epoch / 15) * 100))
-    # Run the simulation for all walkers in parallel
-    for frame in range(NUM_ITERATIONS):
-        # Get inputs for all walkers
-        inputs = sim.infos_array()
-        
-        # Process inputs through each genome's network
-        all_outputs = []
-        for i, net in enumerate(nets):
-            outputs = net.activate(inputs[i])
-            all_outputs.append(outputs)
-        
-        sim.handle_events()
-        if not sim.running:
-            exit(1)
 
-        # Update all walkers with their respective outputs
-        sim.update(all_outputs)
+    # drawn epochs
+    if epoch >= SKIP_FIRST_EPOCHS and (epoch - SKIP_FIRST_EPOCHS) % DISPLAY_EVERY_EPOCH == 0:
 
-        if epoch >= SKIP_FIRST_EPOCHS and epoch % DISPLAY_EVERY_EPOCH == 0:
+        sim = sims[0]
+        sim.reset()
+        sim.make_walkers(num_genomes)
+
+        for _ in range(NUM_ITERATIONS):
+            inputs = sim.infos_array()
+            all_outputs = [net.activate(inputs[i]) for i, net in enumerate(nets)]
+            
+            drawer.handle_events()
+            sim.update(all_outputs)
+
             strings = [
                 f"Epoch: {epoch}",
                 f"Best fitness yet: {best_fitness:.2f}",
             ]
-            sim.draw(strings)
-        elif frame == 0:
-            sim.screen.fill((64,64,64))
-            font = pygame.font.Font(None, 36)
-            text_surface = font.render(f"Epoch {epoch} in progress...", True, (192,192,192))
-            sim.screen.blit(text_surface, (100, 100))
-            pygame.display.flip()
+            drawer.draw(strings)
         
+        for i, (genome_id, genome) in enumerate(genomes):
+            fitness = sim.walkers[i].fitness()
+            genome.fitness = fitness
+            if fitness > best_fitness:
+                best_fitness = fitness
+
+    else:
+        per_sim_nets = [[]] * len(sims)
+        
+        for i, sim in enumerate(sims):
+            per_sim_nets[i % len(sims)].append(net)
+            sim.reset()
+            sim.make_walkers(len(per_sim_nets[i]))
+
+        with multiprocessing.Pool(processes=NUM_WORKERS) as pool:
+            results = pool.starmap(simulation_worker, [(sims[i], per_sim_nets[i], NUM_ITERATIONS) for i in range(NUM_WORKERS)])
+
+            for i, (genome_id, genome) in enumerate(genomes):
+                fitness = results[i // len(sims)][i % len(sims)]
+                genome.fitness = fitness
+                if fitness > best_fitness:
+                    best_fitness = fitness
     
-    # Evaluate fitness for each genome
-    for i, (genome_id, genome) in enumerate(genomes):
-        fitness = sim.walkers[i].fitness()
-        genome.fitness = fitness
-        if fitness > best_fitness:
-            best_fitness = fitness
+
+
         
     epoch += 1
 
-if __name__ == "__main__":
-    sim = Simulation()
 
+if __name__ == "__main__":
     random.seed(1000)
     
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -78,21 +101,17 @@ if __name__ == "__main__":
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    # p.add_reporter(neat.Checkpointer(40))
 
     winner = p.run(eval_genomes, 200)
 
-    # playback the best genome
+    drawer.sim = sims[0]
     sim.reset()
     sim.make_walkers(1)
     best_genome = neat.nn.FeedForwardNetwork.create(winner, config)
     
-    while sim.running:
+    while True:
         inputs = sim.walkers[0].info().as_array()
         outputs = best_genome.activate(inputs)
-        sim.handle_events()
-        if not sim.running:
-            exit(1)
-         
+        drawer.handle_events()         
         sim.update([outputs])
-        sim.draw()
+        drawer.draw()
