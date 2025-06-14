@@ -6,7 +6,7 @@ import pygame
 epoch = 0
 best_fitness = -float('inf')
 
-SKIP_FIRST_EPOCHS = 50
+SKIP_FIRST_EPOCHS = 190
 DISPLAY_EVERY_EPOCH = 10
 
 def eval_genomes(genomes, config):
@@ -43,7 +43,7 @@ def eval_genomes(genomes, config):
         # Update all walkers with their respective outputs
         sim.update(all_outputs)
 
-        if epoch >= SKIP_FIRST_EPOCHS and epoch % DISPLAY_EVERY_EPOCH == 0:
+        if epoch >= SKIP_FIRST_EPOCHS and (epoch - SKIP_FIRST_EPOCHS) % DISPLAY_EVERY_EPOCH == 0:
             strings = [
                 f"Epoch: {epoch}",
                 f"Best fitness yet: {best_fitness:.2f}",
@@ -95,4 +95,11 @@ if __name__ == "__main__":
             exit(1)
          
         sim.update([outputs])
+
+        info = sim.walkers[0].info()
+        strings = [
+            f"Distance traveled: {info.hDistance:.2f} m",
+            f"Energy spent: {info.energySpent:.2f} J",
+            f"Energy efficiency: {info.energySpent / info.hDistance:.2f} m/J",
+        ]
         sim.draw()
