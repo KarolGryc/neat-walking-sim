@@ -6,18 +6,16 @@ import pygame
 epoch = 0
 best_fitness = -float('inf')
 
-SKIP_FIRST_EPOCHS = 190
+SKIP_FIRST_EPOCHS = 50
 DISPLAY_EVERY_EPOCH = 10
 
 def eval_genomes(genomes, config):
     global epoch
     global best_fitness
 
-    # Reset simulation once for the whole generation
     sim.reset()
     sim.make_walkers(len(genomes))
     
-    # Create a neural network for each genome
     nets = []
     for genome_id, genome in genomes:
         genome.fitness = 0.0
@@ -25,12 +23,9 @@ def eval_genomes(genomes, config):
         nets.append(net)
 
     NUM_ITERATIONS = int(min(1500, 300 + (epoch / 15) * 100))
-    # Run the simulation for all walkers in parallel
     for frame in range(NUM_ITERATIONS):
-        # Get inputs for all walkers
         inputs = sim.infos_array()
         
-        # Process inputs through each genome's network
         all_outputs = []
         for i, net in enumerate(nets):
             outputs = net.activate(inputs[i])
@@ -40,7 +35,6 @@ def eval_genomes(genomes, config):
         if not sim.running:
             exit(1)
 
-        # Update all walkers with their respective outputs
         sim.update(all_outputs)
 
         if epoch >= SKIP_FIRST_EPOCHS and (epoch - SKIP_FIRST_EPOCHS) % DISPLAY_EVERY_EPOCH == 0:
@@ -56,8 +50,6 @@ def eval_genomes(genomes, config):
             sim.screen.blit(text_surface, (100, 100))
             pygame.display.flip()
         
-    
-    # Evaluate fitness for each genome
     for i, (genome_id, genome) in enumerate(genomes):
         fitness = sim.walkers[i].fitness()
         genome.fitness = fitness
@@ -82,7 +74,6 @@ if __name__ == "__main__":
 
     winner = p.run(eval_genomes, 200)
 
-    # playback the best genome
     sim.reset()
     sim.make_walkers(1)
     best_genome = neat.nn.FeedForwardNetwork.create(winner, config)

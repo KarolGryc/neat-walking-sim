@@ -15,8 +15,6 @@ TIME_STEP = 1.0 / TARGET_FPS
 VELOCITY_ITERATIONS = 8
 POSITION_ITERATIONS = 3
 
-CAM_START_X = 0
-CAM_START_Y = 4.5
 
 class Simulation:
     def __init__(self):
@@ -30,8 +28,7 @@ class Simulation:
 
         self.PPM = SCREEN_HEIGHT / VERTICAL_FOV
 
-        self.cameraY = CAM_START_Y
-        self.cameraX = CAM_START_X
+        self.cameraX, self.cameraY = 0, 4.5
 
         self.walkers = []
 
@@ -103,7 +100,6 @@ class Simulation:
 
         self.screen.fill((255, 255, 255))
 
-        # meter lines
         for i in range(100):
             screenx = self.world_to_screen((i, 0))[0]
             pygame.draw.line(self.screen, (200, 200, 200), (screenx, 0), (screenx, SCREEN_HEIGHT))
@@ -116,7 +112,7 @@ class Simulation:
                 elif isinstance(fixture.shape, b2PolygonShape):
                     self.draw_polygon(fixture, color)
                 elif isinstance(fixture.shape, b2CircleShape):
-                    self.draw_circle(fixture, color)        # Find the walker that has traveled the furthest
+                    self.draw_circle(fixture, color)
 
         font = pygame.font.Font(None, 24)
         y_offset = 10
@@ -131,8 +127,6 @@ class Simulation:
         self.world.ClearForces()
         for walker in self.walkers:
             walker.destroy()
-        self.cameraX = CAM_START_X
-        self.cameraY = CAM_START_Y
 
     def infos_array(self):
         return [walker.info().as_array() for walker in self.walkers]
