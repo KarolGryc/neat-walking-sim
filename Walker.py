@@ -54,7 +54,7 @@ class Walker:
         HIP_FORWARD_LIMIT = math.radians(120)
         HIP_BACKWARD_LIMIT = math.radians(-25)
         KNEE_FORWARD_LIMIT = math.radians(-6)
-        KNEE_BACKWARD_LIMIT = math.radians(130)
+        KNEE_BACKWARD_LIMIT = math.radians(160)
 
         LEFT_COLOR = (0, 100, 255)
 

@@ -5,9 +5,8 @@ import random
 import time
 import multiprocessing as mp
 
-best_fitness = -float('inf')
 epoch = 0
-SKIP_FIRST_EPOCHS = 500
+SKIP_FIRST_EPOCHS = 2500
 DISPLAY_EVERY_EPOCH = 1
 
 def eval_genome(genome, config):
@@ -28,8 +27,6 @@ def eval_genome(genome, config):
     return sim.walker.fitness()
 
 def eval_genomes(genomes, config):
-    global best_fitness
-    # Reset simulation once for the whole generation
     sim.reset()
     sim.make_walkers(len(genomes))
     
@@ -41,13 +38,13 @@ def eval_genomes(genomes, config):
 
     # NUM_ITERATIONS = int(min(1500, 300 + (epoch / 15) * 100))
     NUM_ITERATIONS = 1500
-    for frame in range(NUM_ITERATIONS):
+    for _ in range(NUM_ITERATIONS):
         inputs = sim.infos_array()
         
         all_outputs = []
         for i, net in enumerate(nets):
-            if (sim.walkers[i].is_dead()):
-                continue
+            # if (sim.walkers[i].is_dead()):
+                # continue
             outputs = net.activate(inputs[i])
             all_outputs.append(outputs)
         
@@ -60,7 +57,6 @@ def eval_genomes(genomes, config):
         if epoch % DISPLAY_EVERY_EPOCH == 0:
             sim.draw()
     
-    # Evaluate fitness for each genome
     for i, (genome_id, genome) in enumerate(genomes):
         genome.fitness = sim.walkers[i].fitness()
 
