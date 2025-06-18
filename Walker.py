@@ -12,12 +12,24 @@ class Walker:
 
     def __init__(self, position, simulation):
         self.simulation = simulation
+        self.dead = False
 
         self.energySpent = 0.0
         self._build(position)
 
         self.left_leg_forward = 1
         self.right_leg_forward = 1
+
+    def is_dead(self):
+        if self.dead:
+            return True
+
+        info = self.info()
+        head_height = (info.headAltitude - 0.3)
+        if head_height < 0.025:
+            self.dead = True
+        
+        return self.dead
 
     def _build(self, position):
         x, y = position
@@ -134,15 +146,13 @@ class Walker:
         return body
     
     def update(self, dt, joint_efforts):
-        self._total_time += dt
-        self._height_score += self.torso.position[1] * dt
+        # self._total_time += dt
+        # self._height_score += self.torso.position[1] * dt
 
-        max_speed = self.MAX_JOINT_SPEED
-        max_joint_torque = self.MAX_JOINT_TORQUE
         for (effort, joint) in zip(joint_efforts, self._joints()):
             clamped_effort = min(1, max(-1, effort * 2 - 1))
-            joint.motorSpeed = max_speed * (1 if clamped_effort > 0 else -1)
-            joint.maxMotorTorque = abs(float(clamped_effort)) * max_joint_torque
+            joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
+            joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE
 
     def info(self):
         # distance = min(b.position[0] for b in self._bodies())
@@ -166,9 +176,10 @@ class Walker:
     def fitness(self):
         info = self.info()
 
-        normalized_height_score = (self._height_score) /  self._total_time
-        average_speed_score = info.hDistance / self._total_time
-        fitness = (1 if normalized_height_score > 0.5 else 0) * (average_speed_score * 0.3 if average_speed_score > 0 else 0) ** (normalized_height_score if normalized_height_score > 0 else 0.000001) 
+        # normalized_height_score = (self._height_score) /  self._total_time
+        # average_speed_score = info.hDistance / self._total_time
+        # fitness = (average_speed_score * 0.3 if average_speed_score > 0 else 0) ** (normalized_height_score if normalized_height_score > 0 else 0.000001) 
+        fitness = info.hDistance
         # print(f"{normalized_height_score:4f}", )
         return fitness
 

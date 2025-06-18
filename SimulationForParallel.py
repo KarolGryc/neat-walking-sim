@@ -16,7 +16,7 @@ class SimulationForParallel:
     def make_walker(self):
         self.walker = Walker((2, 1.5), self)
 
-    def create_static_box(self, position, size, friction=0.5, restitution=0.85, angle=0):
+    def create_static_box(self, position, size, friction=0.5, restitution=0.8, angle=0):
         body = self.world.CreateStaticBody(
             position=position,
             angle=angle,

@@ -18,6 +18,8 @@ def eval_genome(genome, config):
 
     NUM_ITERATIONS = 1500
     for _ in range(NUM_ITERATIONS):
+        if (sim.walker.is_dead()):
+            break
         inputs = sim.walker.info().as_array()
         outputs = net.activate(inputs)
         sim.update(outputs)
@@ -46,6 +48,8 @@ def eval_genomes(genomes, config):
         # Process inputs through each genome's network
         all_outputs = []
         for i, net in enumerate(nets):
+            if (sim.walkers[i].is_dead()):
+                continue
             outputs = net.activate(inputs[i])
             all_outputs.append(outputs)
         
@@ -83,8 +87,6 @@ def playback_genome(simulation, genome):
 
 if __name__ == "__main__":
     global sim
-    sim = Simulation()
-
     random.seed(1000)
     
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -94,12 +96,13 @@ if __name__ == "__main__":
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(60))
+    p.add_reporter(neat.Checkpointer(100))
 
     pe = neat.ParallelEvaluator(mp.cpu_count(), eval_genome)
 
     p.run(pe.evaluate, SKIP_FIRST_EPOCHS)
-    winner = p.run(eval_genomes, 500)
+    sim = Simulation()
+    winner = p.run(eval_genomes, 1000)
 
     # playback the best genome
     while True:
