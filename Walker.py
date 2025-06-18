@@ -3,19 +3,33 @@ from WalkerInfo import WalkerInfo
 import math
 
 BRAKE_ON_NO_INPUT = False
+max_height_score = 0.0
 
 class Walker:
-    MAX_JOINT_SPEED = 2 * math.pi * 0.7
-    MAX_JOINT_TORQUE = 7
+    MAX_JOINT_SPEED = 2 * math.pi * 0.9
+    MAX_JOINT_TORQUE = 12
+    global max_height_score
 
     def __init__(self, position, simulation):
         self.simulation = simulation
+        self.dead = False
 
         self.energySpent = 0.0
         self._build(position)
 
         self.left_leg_forward = 1
         self.right_leg_forward = 1
+
+    def is_dead(self):
+        if self.dead:
+            return True
+
+        info = self.info()
+        head_height = (info.headAltitude - 0.3)
+        if head_height < 0.025:
+            self.dead = True
+        
+        return self.dead
 
     def _build(self, position):
         x, y = position
@@ -37,10 +51,10 @@ class Walker:
         LEFT_FOOT_POS = (x-HIP_RADIUS, y - 1)
         RIGHT_FOOT_POS = (x+HIP_RADIUS, y - 1)
 
-        HIP_FORWARD_LIMIT = math.radians(80)
-        HIP_BACKWARD_LIMIT = math.radians(30)
-        KNEE_FORWARD_LIMIT = math.radians(0)
-        KNEE_BACKWARD_LIMIT = math.radians(100)
+        HIP_FORWARD_LIMIT = math.radians(120)
+        HIP_BACKWARD_LIMIT = math.radians(-25)
+        KNEE_FORWARD_LIMIT = math.radians(-6)
+        KNEE_BACKWARD_LIMIT = math.radians(130)
 
         LEFT_COLOR = (0, 100, 255)
 
@@ -49,8 +63,8 @@ class Walker:
         self.right_upper = self._create_limb(RIGHT_KNEE_POS, RIGHT_HIP_POS, radius=0.1, width=0.2)
 
         # Create the lower legs
-        self.left_lower = self._create_limb(LEFT_FOOT_POS, LEFT_KNEE_POS, radius=0.1, width=0.15, color=LEFT_COLOR)
-        self.right_lower = self._create_limb(RIGHT_FOOT_POS, RIGHT_KNEE_POS, radius=0.1, width=0.15)
+        self.left_lower = self._create_limb(LEFT_FOOT_POS, LEFT_KNEE_POS, radius=0.125, width=0.15, color=LEFT_COLOR)
+        self.right_lower = self._create_limb(RIGHT_FOOT_POS, RIGHT_KNEE_POS, radius=0.125, width=0.15)
 
         # Create the torso
         self.torso = self._create_limb(HEAD_POS, position, radius=0.3, width=0.3)
@@ -132,28 +146,17 @@ class Walker:
         return body
     
     def update(self, dt, joint_efforts):
-        assert len(joint_efforts) == 4, "Expected 4 joint efforts for the walker."
-    
-        self._total_time += dt
-        self._height_score += self.torso.position[1] * dt
+        # self._total_time += dt
+        # self._height_score += self.torso.position[1] * dt
+
         for (effort, joint) in zip(joint_efforts, self._joints()):
             clamped_effort = min(1, max(-1, effort * 2 - 1))
-            self.energySpent += abs(clamped_effort) * dt
-            if BRAKE_ON_NO_INPUT:
-                joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
-            else:
-                joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
-                joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE
-        
-        is_left_leg_forward = self.left_lower.position[0] < self.right_lower.position[0]
-        if is_left_leg_forward:
-            self.left_leg_forward += 1
-        else:
-            self.right_leg_forward += 1
+            joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
+            joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE
 
     def info(self):
-        distance = min([b.position[0] for b in self._bodies()])
-
+        # distance = min(b.position[0] for b in self._bodies())
+        distance = self.torso.position[0]
         return WalkerInfo(
             headAltitude=self.torso.position[1],
             hDistance=distance-self.startX,
@@ -168,28 +171,22 @@ class Walker:
             rHipSpeed=self.right_hip_joint.speed,
             lKneeSpeed=self.left_knee_joint.speed,
             rKneeSpeed=self.right_knee_joint.speed,
-            leftLegLead=(self.left_leg_forward / (self.left_leg_forward + self.right_leg_forward))
         )
 
     def fitness(self):
         info = self.info()
 
-        HEIGHT_WEIGHT = 1
-        DISTANCE_WEIGHT = 1
-        fitness = HEIGHT_WEIGHT * self._height_score / self._total_time + DISTANCE_WEIGHT * info.hDistance / self._total_time
-        # multiplier = 1.0
-        # if is_tipped_over:
-        #     multiplier *= 0.05
-        # if is_left_knee_on_ground:
-        #     multiplier *= 0.5
-        # if is_right_knee_on_ground:
-        #     multiplier *= 0.5
-
-        # lead_deviation = abs(info.leftLegLead - 0.5)
-        # fitness = 4 + multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
-        # fitness = multiplier * info.hDistance  - 0.4 * info.energySpent # - 0.5 * lead_deviation
+        # normalized_height_score = (self._height_score) /  self._total_time
+        # average_speed_score = info.hDistance / self._total_time
+        # fitness = (average_speed_score * 0.3 if average_speed_score > 0 else 0) ** (normalized_height_score if normalized_height_score > 0 else 0.000001) 
+        # HEIGHT_WEIGHT = 1
+        # DISTANCE_WEIGHT = 1
+        # fitness = HEIGHT_WEIGHT * self._height_score / self._total_time + DISTANCE_WEIGHT * info.hDistance / self._total_time
+        fitness = info.hDistance
+        # print(f"{normalized_height_score:4f}", )
         return fitness
-    
+
+    # If possible just create new world for walkers    
     def destroy(self):
         for joint in self._joints():
             self.simulation.world.DestroyJoint(joint)
@@ -198,18 +195,18 @@ class Walker:
             self.simulation.world.DestroyBody(body)
     
     def _joints(self):
-        return [
+        return (
             self.left_hip_joint,
             self.right_hip_joint,
             self.left_knee_joint,
             self.right_knee_joint
-        ]
+        )
     
     def _bodies(self):
-        return [
+        return (
             self.left_upper,
             self.right_upper,
             self.left_lower,
             self.right_lower,
             self.torso
-        ]
+        )

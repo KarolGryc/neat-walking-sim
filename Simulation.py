@@ -32,15 +32,14 @@ class Simulation:
 
         self.walkers = []
 
-        # ground
-        self.create_static_box((50, -0.25), (100, 0.5), friction=0.4, restitution=0.1)
+        self.create_static_box((50, -0.25), (100, 0.5))
 
         self.reset()
 
     def make_walkers(self, num_walkers):
         self.walkers = [Walker((2, 1.5), self) for _ in range(num_walkers)]
 
-    def create_static_box(self, position, size, friction=0.8, restitution=0.4, angle=0):
+    def create_static_box(self, position, size, friction=0.5, restitution=0.8, angle=0):
         body = self.world.CreateStaticBody(
             position=position,
             angle=angle,
@@ -112,8 +111,17 @@ class Simulation:
                 elif isinstance(fixture.shape, b2PolygonShape):
                     self.draw_polygon(fixture, color)
                 elif isinstance(fixture.shape, b2CircleShape):
-                    self.draw_circle(fixture, color)
-
+                    self.draw_circle(fixture, color)        # Find the walker that has traveled the furthest
+        
+        leader_idx = max(range(len(self.walkers)), key=lambda i: self.walkers[i].info().hDistance)
+        walker_info = self.walkers[leader_idx].info()
+        
+        walker_info_texts = [
+            f"Altitude: {walker_info.headAltitude:.2f}",
+            f"Energy spent: {walker_info.energySpent:.2f}",
+            f"Distance walked: {walker_info.hDistance:.2f}",
+            # f"Time of left leg lead: {walker_info.leftLegLead:.2f}",
+        ]
         font = pygame.font.Font(None, 24)
         y_offset = 10
         for text in strings:
