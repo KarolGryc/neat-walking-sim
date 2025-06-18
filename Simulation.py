@@ -35,15 +35,14 @@ class Simulation:
 
         self.walkers = []
 
-        # ground
-        self.create_static_box((50, -0.25), (100, 0.5), friction=0.6, restitution=0.1)
+        self.create_static_box((50, -0.25), (100, 0.5))
 
         self.reset()
 
     def make_walkers(self, num_walkers):
         self.walkers = [Walker((2, 1.5), self) for _ in range(num_walkers)]
 
-    def create_static_box(self, position, size, friction=0.5, restitution=0.8, angle=0):
+    def create_static_box(self, position, size, friction=0.5, restitution=0.85, angle=0):
         body = self.world.CreateStaticBody(
             position=position,
             angle=angle,

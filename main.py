@@ -1,15 +1,30 @@
 from Simulation import Simulation
+from SimulationForParallel import SimulationForParallel
 import neat
 import random
 import time
+import multiprocessing as mp
 
 epoch = 0
-SKIP_FIRST_EPOCHS = 50
-DISPLAY_EVERY_EPOCH = 10
+SKIP_FIRST_EPOCHS = 500
+DISPLAY_EVERY_EPOCH = 1
+
+def eval_genome(genome, config):
+    genome.fitness = 0.0
+    sim = SimulationForParallel()
+    sim.make_walker()
+    
+    net = neat.nn.FeedForwardNetwork.create(genome, config)
+
+    NUM_ITERATIONS = 1500
+    for _ in range(NUM_ITERATIONS):
+        inputs = sim.walker.info().as_array()
+        outputs = net.activate(inputs)
+        sim.update(outputs)
+    
+    return sim.walker.fitness()
 
 def eval_genomes(genomes, config):
-    global epoch
-
     # Reset simulation once for the whole generation
     sim.reset()
     sim.make_walkers(len(genomes))
@@ -21,7 +36,8 @@ def eval_genomes(genomes, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         nets.append(net)
 
-    NUM_ITERATIONS = int(min(1500, 300 + (epoch / 15) * 100))
+    # NUM_ITERATIONS = int(min(1500, 300 + (epoch / 15) * 100))
+    NUM_ITERATIONS = 1500
     # Run the simulation for all walkers in parallel
     for _ in range(NUM_ITERATIONS):
         # Get inputs for all walkers
@@ -40,14 +56,12 @@ def eval_genomes(genomes, config):
         # Update all walkers with their respective outputs
         sim.update(all_outputs)
 
-        if epoch >= SKIP_FIRST_EPOCHS and epoch % DISPLAY_EVERY_EPOCH == 0:
+        if epoch % DISPLAY_EVERY_EPOCH == 0:
             sim.draw()
     
     # Evaluate fitness for each genome
     for i, (genome_id, genome) in enumerate(genomes):
         genome.fitness = sim.walkers[i].fitness()
-        
-    epoch += 1
 
 def playback_genome(simulation, genome):
     simulation.reset()
@@ -68,6 +82,7 @@ def playback_genome(simulation, genome):
             break
 
 if __name__ == "__main__":
+    global sim
     sim = Simulation()
 
     random.seed(1000)
@@ -81,8 +96,16 @@ if __name__ == "__main__":
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(60))
 
-    winner = p.run(eval_genomes, 2500)
+    pe = neat.ParallelEvaluator(mp.cpu_count(), eval_genome)
+
+    p.run(pe.evaluate, SKIP_FIRST_EPOCHS)
+    winner = p.run(eval_genomes, 500)
 
     # playback the best genome
-    # best_genome = neat.nn.FeedForwardNetwork.create(winner, config)
-    # playback_genome(sim, best_genome)
+    while True:
+        sim.handle_events()
+        if not sim.running:
+            exit(1)
+
+        best_genome = neat.nn.FeedForwardNetwork.create(winner, config)
+        playback_genome(sim, best_genome)

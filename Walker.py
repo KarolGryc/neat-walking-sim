@@ -134,31 +134,15 @@ class Walker:
         return body
     
     def update(self, dt, joint_efforts):
-        # assert len(joint_efforts) == 4, "Expected 4 joint efforts for the walker."
-    
         self._total_time += dt
         self._height_score += self.torso.position[1] * dt
-        global max_height_score
-        # print(f"Height score: {self._height_score}, Max height score:{max_height_score}", "Normalized height score:", (self._height_score / max_height_score) if max_height_score > 0 else 0)
-        if self._height_score > max_height_score:
-            max_height_score = self._height_score
 
         max_speed = self.MAX_JOINT_SPEED
         max_joint_torque = self.MAX_JOINT_TORQUE
         for (effort, joint) in zip(joint_efforts, self._joints()):
             clamped_effort = min(1, max(-1, effort * 2 - 1))
-            # self.energySpent += abs(clamped_effort) * dt
-            # if BRAKE_ON_NO_INPUT:
-                # joint.motorSpeed = self.MAX_JOINT_SPEED * clamped_effort
-            # else:
             joint.motorSpeed = max_speed * (1 if clamped_effort > 0 else -1)
             joint.maxMotorTorque = abs(float(clamped_effort)) * max_joint_torque
-        
-        # is_left_leg_forward = self.left_lower.position[0] < self.right_lower.position[0]
-        # if is_left_leg_forward:
-            # self.left_leg_forward += 1
-        # else:
-            # self.right_leg_forward += 1
 
     def info(self):
         # distance = min(b.position[0] for b in self._bodies())
@@ -177,18 +161,18 @@ class Walker:
             rHipSpeed=self.right_hip_joint.speed,
             lKneeSpeed=self.left_knee_joint.speed,
             rKneeSpeed=self.right_knee_joint.speed,
-            # leftLegLead=(self.left_leg_forward / (self.left_leg_forward + self.right_leg_forward))
         )
 
     def fitness(self):
         info = self.info()
 
-        average_height_score = self._height_score / self._total_time
-        normalized_height_score = (self._height_score) /  max_height_score
+        normalized_height_score = (self._height_score) /  self._total_time
         average_speed_score = info.hDistance / self._total_time
-        fitness = info.energySpent * average_height_score * average_speed_score
+        fitness = (1 if normalized_height_score > 0.5 else 0) * (average_speed_score * 0.3 if average_speed_score > 0 else 0) ** (normalized_height_score if normalized_height_score > 0 else 0.000001) 
+        # print(f"{normalized_height_score:4f}", )
         return fitness
-    
+
+    # If possible just create new world for walkers    
     def destroy(self):
         for joint in self._joints():
             self.simulation.world.DestroyJoint(joint)
@@ -197,18 +181,18 @@ class Walker:
             self.simulation.world.DestroyBody(body)
     
     def _joints(self):
-        return [
+        return (
             self.left_hip_joint,
             self.right_hip_joint,
             self.left_knee_joint,
             self.right_knee_joint
-        ]
+        )
     
     def _bodies(self):
-        return [
+        return (
             self.left_upper,
             self.right_upper,
             self.left_lower,
             self.right_lower,
             self.torso
-        ]
+        )
