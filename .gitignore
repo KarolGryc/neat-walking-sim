@@ -1,4 +1,6 @@
 # NEAT Python checkpoints
+test_results/
+checkpoints/
 neat-checkpoint-*
 
 # Byte-compiled / optimized / DLL files

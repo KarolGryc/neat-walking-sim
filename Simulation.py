@@ -53,8 +53,11 @@ class Simulation:
     
     def world_to_screen(self, world_coords):
         x, y = world_coords
-        screen_x = int( (x - self.cameraX) * self.PPM) + SCREEN_WIDTH // 2
-        screen_y = int(-(y - self.cameraY) * self.PPM) + SCREEN_HEIGHT // 2
+        ppm = self.PPM
+        screen_width = SCREEN_WIDTH
+        screen_height = SCREEN_HEIGHT
+        screen_x = int( (x - self.cameraX) * ppm) + screen_width // 2
+        screen_y = int(-(y - self.cameraY) * ppm) + screen_height // 2
         return screen_x, screen_y
 
     def screen_to_world(self, screen_coords):
@@ -64,11 +67,11 @@ class Simulation:
         return (world_x, world_y)
     
     def draw_polygon(self, fixture, color=(0, 150, 255), border_width=1):
-        if not fixture.shape:
-            return
+        # if not fixture.shape:
+        #     return
         shape = fixture.shape
-        vertices = [fixture.body.transform * v for v in shape.vertices]
-        vertices = [self.world_to_screen(v) for v in vertices]
+        transform = fixture.body.transform
+        vertices = [self.world_to_screen(transform * v) for v in shape.vertices]
         pygame.draw.polygon(self.screen, color, vertices)
         pygame.draw.polygon(self.screen, (0, 0, 0), vertices, border_width)
     
@@ -124,7 +127,7 @@ class Simulation:
         ]
         font = pygame.font.Font(None, 24)
         y_offset = 10
-        for text in strings:
+        for text in walker_info_texts:
             text_surface = font.render(text, True, (0, 0, 0))
             self.screen.blit(text_surface, (10, y_offset))
             y_offset += text_surface.get_height()

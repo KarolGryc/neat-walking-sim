@@ -54,7 +54,7 @@ class Walker:
         HIP_FORWARD_LIMIT = math.radians(120)
         HIP_BACKWARD_LIMIT = math.radians(-25)
         KNEE_FORWARD_LIMIT = math.radians(-6)
-        KNEE_BACKWARD_LIMIT = math.radians(130)
+        KNEE_BACKWARD_LIMIT = math.radians(160)
 
         LEFT_COLOR = (0, 100, 255)
 
@@ -146,17 +146,23 @@ class Walker:
         return body
     
     def update(self, dt, joint_efforts):
-        # self._total_time += dt
-        # self._height_score += self.torso.position[1] * dt
+        self._total_time += dt
+        self._height_score += self.torso.position[1] * dt
 
         for (effort, joint) in zip(joint_efforts, self._joints()):
             clamped_effort = min(1, max(-1, effort * 2 - 1))
+
+            # if clamped_effort < 0.005:
+            #     joint.motorEnabled = False
+            # else:
+            #     joint.motorEnabled = True
+            self.energySpent += abs(clamped_effort) * dt
             joint.motorSpeed = self.MAX_JOINT_SPEED * (1 if clamped_effort > 0 else -1)
             joint.maxMotorTorque = abs(float(clamped_effort)) * self.MAX_JOINT_TORQUE
 
     def info(self):
-        # distance = min(b.position[0] for b in self._bodies())
-        distance = self.torso.position[0]
+        distance = min(b.position[0] for b in self._bodies())
+        # distance = self.torso.position[0]
         return WalkerInfo(
             headAltitude=self.torso.position[1],
             hDistance=distance-self.startX,
@@ -173,18 +179,36 @@ class Walker:
             rKneeSpeed=self.right_knee_joint.speed,
         )
 
-    def fitness(self):
-        info = self.info()
+    # def fitness(self):
+    #     info = self.info()
 
-        # normalized_height_score = (self._height_score) /  self._total_time
-        # average_speed_score = info.hDistance / self._total_time
-        # fitness = (average_speed_score * 0.3 if average_speed_score > 0 else 0) ** (normalized_height_score if normalized_height_score > 0 else 0.000001) 
-        # HEIGHT_WEIGHT = 1
-        # DISTANCE_WEIGHT = 1
-        # fitness = HEIGHT_WEIGHT * self._height_score / self._total_time + DISTANCE_WEIGHT * info.hDistance / self._total_time
-        fitness = info.hDistance
-        # print(f"{normalized_height_score:4f}", )
-        return fitness
+    #     # normalized_height_score = (self._height_score) /  self._total_time
+    #     # average_speed_score = info.hDistance / self._total_time
+    #     # fitness = (average_speed_score * 0.3 if average_speed_score > 0 else 0) ** (normalized_height_score if normalized_height_score > 0 else 0.000001) 
+    #     HEIGHT_WEIGHT = 0.1
+    #     DISTANCE_WEIGHT = 0.2
+
+    #     fitness = HEIGHT_WEIGHT * self._height_score + DISTANCE_WEIGHT * info.hDistance
+
+    #     return fitness
+    def fitness(self):
+            is_tipped_over = self.torso.position[1] < 0.5
+            is_left_knee_on_ground = self.left_upper.position[1] < 0.2
+            is_right_knee_on_ground = self.right_upper.position[1] < 0.2
+
+            info = self.info()
+
+            multiplier = 1.0
+            if is_tipped_over:
+                multiplier = 0.05
+            if is_left_knee_on_ground:
+                multiplier= 0.5
+            if is_right_knee_on_ground:
+                multiplier = 0.5
+
+            # lead_deviation = abs(info.leftLegLead - 0.5)
+            fitness = multiplier * info.hDistance  + 0.05 * info.energySpent # - 0.5 * lead_deviation
+            return fitness
 
     # If possible just create new world for walkers    
     def destroy(self):
