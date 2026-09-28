@@ -6,11 +6,11 @@ import time
 import multiprocessing as mp
 import visualize
 
-EPOCHS_WITHOUT_RENDER = 1
-EPOCHS_WITH_RENDER = 0
+EPOCHS_WITHOUT_RENDER = 10
+EPOCHS_WITH_RENDER = 1
 
 # Checkpoints
-LOAD_FROM_CHECKPOINT = True
+LOAD_FROM_CHECKPOINT = False
 CHECKPOINT_RESTORE_FILE = 'test_results/test4/checkpoints/checkpoint-2999'
 # CHECKPOINT_RESTORE_FILE = 'test_results/test8/checkpoints/checkpoint-2999'
 CHECKPOINT_SAVE_FILE = 'checkpoints/checkpoint-'
