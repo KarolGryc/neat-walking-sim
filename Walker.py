@@ -192,23 +192,23 @@ class Walker:
 
     #     return fitness
     def fitness(self):
-            is_tipped_over = self.torso.position[1] < 0.5
-            is_left_knee_on_ground = self.left_upper.position[1] < 0.2
-            is_right_knee_on_ground = self.right_upper.position[1] < 0.2
+        is_tipped_over = self.torso.position[1] < 0.5
+        is_left_knee_on_ground = self.left_upper.position[1] < 0.2
+        is_right_knee_on_ground = self.right_upper.position[1] < 0.2
 
-            info = self.info()
+        info = self.info()
 
-            multiplier = 1.0
-            if is_tipped_over:
-                multiplier = 0.05
-            if is_left_knee_on_ground:
-                multiplier= 0.5
-            if is_right_knee_on_ground:
-                multiplier = 0.5
+        multiplier = 1.0
+        if is_tipped_over:
+            multiplier = 0.05
+        if is_left_knee_on_ground:
+            multiplier= 0.5
+        if is_right_knee_on_ground:
+            multiplier = 0.5
 
-            # lead_deviation = abs(info.leftLegLead - 0.5)
-            fitness = multiplier * info.hDistance  + 0.05 * info.energySpent # - 0.5 * lead_deviation
-            return fitness
+        # lead_deviation = abs(info.leftLegLead - 0.5)
+        fitness = multiplier * info.hDistance  + 0.05 * info.energySpent # - 0.5 * lead_deviation
+        return fitness
 
     # If possible just create new world for walkers    
     def destroy(self):

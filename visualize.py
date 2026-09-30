@@ -38,11 +38,11 @@ def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
 
 def plot_spikes(spikes, view=False, filename=None, title=None):
     """ Plots the trains for a single spiking neuron. """
-    t_values = [t for t, I, v, u, f in spikes]
-    v_values = [v for t, I, v, u, f in spikes]
-    u_values = [u for t, I, v, u, f in spikes]
-    I_values = [I for t, I, v, u, f in spikes]
-    f_values = [f for t, I, v, u, f in spikes]
+    t_values = [t for t, _, _, _, _ in spikes]
+    v_values = [v for _, _, v, _, _ in spikes]
+    u_values = [u for _, _, _, u, _ in spikes]
+    I_values = [I for _, I, _, _, _ in spikes]
+    f_values = [f for _, _, _, _, f in spikes]
 
     fig = plt.figure()
     plt.subplot(4, 1, 1)

@@ -1,11 +1,9 @@
 import pygame
 from Box2D import (
-    b2World, b2PolygonShape, b2CircleShape, b2_staticBody, b2_dynamicBody
+    b2World, b2PolygonShape, b2CircleShape
 )
-import math
+
 from Walker import Walker
-import numpy as np
-from WalkerInfo import WalkerInfo
 
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
@@ -97,7 +95,7 @@ class Simulation:
 
         self.cameraX = max(walker.torso.position[0] for walker in self.walkers)
 
-    def draw(self, strings=[]):
+    def draw(self):
         self.clock.tick(TARGET_FPS)
 
         self.screen.fill((255, 255, 255))
