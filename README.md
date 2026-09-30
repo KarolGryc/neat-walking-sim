@@ -10,6 +10,11 @@ A script set for training, visualising and experimenting with the NEAT(Neuroevol
 > Read all the occuring error messages during installation instalation process.
 ```
 
+```text
+> [!WARNING]
+> Project requires Python 3.14 to run.
+```
+
 ### 1. Download the repository
 ### 2. In the repository directory run
 ```bash
