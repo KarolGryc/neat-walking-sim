@@ -3,6 +3,9 @@ test_results/
 checkpoints/
 neat-checkpoint-*
 
+network_epoch_*
+*.svg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

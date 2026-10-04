@@ -322,7 +322,7 @@ class MainWindow(QtWidgets.QMainWindow):
         main_layout = QtWidgets.QHBoxLayout(main_widget)
 
         left_layout = QtWidgets.QVBoxLayout()
-        self.sim_screen = ScreenWidget(800, 600)
+        self.sim_screen = ScreenWidget(1200, 800)
         left_layout.addWidget(QtWidgets.QLabel("<b>Podgląd symulacji:</b>"))
         left_layout.addWidget(self.sim_screen)
         left_layout.addStretch()

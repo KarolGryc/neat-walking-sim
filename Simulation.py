@@ -6,8 +6,8 @@ from Box2D import (
 from Walker import Walker
 
 
-SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
-VERTICAL_FOV = 10
+SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 800
+VERTICAL_FOV = 8
 TARGET_FPS = 100
 TIME_STEP = 1.0 / TARGET_FPS
 VELOCITY_ITERATIONS = 8
@@ -26,7 +26,7 @@ class Simulation:
 
         self.PPM = SCREEN_HEIGHT / VERTICAL_FOV
 
-        self.cameraX, self.cameraY = 0, 4.5
+        self.cameraX, self.cameraY = 0, VERTICAL_FOV/2 - 0.5
 
         self.walkers = []
 
